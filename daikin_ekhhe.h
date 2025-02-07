@@ -79,15 +79,26 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
     D2_PACKET_START_IDX = 0,
     D2_PACKET_POWER_IDX = 1,
     D2_PACKET_MODE_IDX  = 3,
-    D2_PACKET_P4_IDX    = 4,
-    D2_PACKET_P2_IDX    = 7,
-    D2_PACKET_TTEMP_IDX = 14,
-    D2_PACKET_P1_IDX    = 20,
-    D2_PACKET_P3_IDX    = 22,
+    D2_PACKET_P4_IDX    = 4,  // CONFIRMED
+    D2_PACKET_P2_IDX    = 7,  // CONFIRMED
+    D2_PACKET_TTEMP_IDX = 14, // CONFIRMED
+    D2_PACKET_P1_IDX    = 20, // CONFIRMED
+    D2_PACKET_P3_IDX    = 22, // CONFIRMED
     D2_PACKET_P24_IDX   = 30,
     D2_PACKET_P16_IDX   = 31,
     D2_PACKET_P23_IDX   = 32,
-    D2_PACKET_END       = 70,
+    D2_PACKET_P18_IDX   = 34, // TBC
+    D2_PACKET_P19_IDX   = 35, // TBC
+    D2_PACKET_P20_IDX   = 36, // TBC
+    D2_PACKET_P22_IDX   = 38,  // TBC
+    D2_PACKET_P36_IDX   = 43, // TBC
+    D2_PACKET_P47_IDX   = 59, // TBC
+    D2_PACKET_P48_IDX   = 60, // TBC
+    D2_PACKET_P49_IDX   = 61, // TBC
+    D2_PACKET_P50_IDX   = 62, // TBC
+    D2_PACKET_P51_IDX   = 63, // TBC
+    D2_PACKET_P52_IDX   = 64, // TBC 
+    D2_PACKET_END       = 70, 
     D2_PACKET_SIZE      = 71,
   };
 

@@ -85,7 +85,6 @@ TYPES = [
     TARGET_TEMPERATURE,
 ]
 
-
 CONFIG_SCHEMA = (
     cv.Schema(
         {

@@ -164,6 +164,17 @@ void DaikinEkhheComponent::parse_d2_packet() {
       {P1_LOW_WAT_PROBE_HYST, buffer_[D2_PACKET_P1_IDX]},
       {P3_ANTL_SET_T, buffer_[D2_PACKET_P3_IDX]},
       {TARGET_TEMPERATURE, buffer_[D2_PACKET_TTEMP_IDX]},
+      {P18_LOW_WAT_T_DIG1, buffer_[D2_PACKET_P18_IDX]},
+      {P19_LOW_WAT_T_HYST, buffer_[D2_PACKET_P19_IDX]},
+      {P20_SOL_DRAIN_THRES, buffer_[D2_PACKET_P20_IDX]},
+      {P22_UP_WAT_T_EH_STOP, buffer_[D2_PACKET_P22_IDX]},
+      {P36_EEV_DSH_SETPOINT, buffer_[D2_PACKET_P36_IDX]},
+      {P47_MAX_INLET_T_HP, buffer_[D2_PACKET_P47_IDX]},
+      {P48_MIN_INLET_T_HP, (int8_t)buffer_[D2_PACKET_P48_IDX]},
+      {P49_EVA_INLET_THRES, buffer_[D2_PACKET_P49_IDX]},
+      {P50_ANTIFREEZE_SET, buffer_[D2_PACKET_P50_IDX]},
+      {P51_EVA_HIGH_SET, buffer_[D2_PACKET_P51_IDX]},
+      {P52_EVA_LOW_SET, buffer_[D2_PACKET_P52_IDX]},
   };
 
   for (const auto &entry : number_values) {
