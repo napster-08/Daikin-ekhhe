@@ -19,6 +19,7 @@ DIG3_CONFIG             = "dig3_config"
 POWER_STATUS            = "power_status"
 OPERATIONAL_MODE        = "operational_mode"
 TARGET_TEMPERATURE      = "target_temperature"
+CURRENT_TIME            = "current_time"
 
 P1_LOW_WAT_PROBE_HYST   = "low_water_hp_hysteris"
 P2_HEAT_ON_DELAY        = "elec_heater_switch_on_delay"

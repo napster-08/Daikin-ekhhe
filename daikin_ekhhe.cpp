@@ -10,16 +10,15 @@ namespace daikin_ekkhe {
 
 using namespace daikin_ekhhe;
 
-static const char *const TAG = "daikin_ekhhe.sensor";
-//static const uint8_t ASCII_CR = 0x0D;
-//static const uint8_t ASCII_NBSP = 0xFF;
-//static const int MAX_DATA_LENGTH_BYTES = 6;
+static const char *const TAG = "daikin_ekhhe";
 
 static const uint8_t DD_PACKET_START_BYTE = 0xDD;
 static const uint8_t D2_PACKET_START_BYTE = 0xD2;
 static const uint8_t D4_PACKET_START_BYTE = 0xD4;
 static const uint8_t C1_PACKET_START_BYTE = 0xC1;
 static const uint8_t CC_PACKET_START_BYTE = 0xCC;
+static const uint8_t CD_PACKET_START_BYTE = 0xCD;
+
 
 // Packet definitions
 static const std::map<uint8_t, uint8_t> PACKET_SIZES = {
@@ -28,16 +27,12 @@ static const std::map<uint8_t, uint8_t> PACKET_SIZES = {
     {D4_PACKET_START_BYTE, DaikinEkhheComponent::D4_PACKET_SIZE},
     {C1_PACKET_START_BYTE, DaikinEkhheComponent::C1_PACKET_SIZE},
     {CC_PACKET_START_BYTE, DaikinEkhheComponent::CC_PACKET_SIZE},
+    {CD_PACKET_START_BYTE, DaikinEkhheComponent::CD_PACKET_SIZE},
 };
-
-//static const uint8_t KAIDI_END_BYTE = 0x16;
-//static const uint8_t KAIDI_MODE_RECEIVED = 0x00;
-
 
 
 void DaikinEkhheComponent::setup() {
     ESP_LOGI(TAG, "Setting up Daikin EKHHE component...");
-    //this->publish_state(""); 
 
 }
 
@@ -69,9 +64,6 @@ void DaikinEkhheComponent::loop() {
 
 DaikinEkhheComponent::EkhheError DaikinEkhheComponent::process_uart_buffer() {
 
-  // TODO: Implement actual UART parsing logic to extract sensor values.
-  // This is just an example.
-
   // Checksum check
   if (buffer_.empty()) {
     return EKHHE_ERROR_BUFFER_EMPTY;
@@ -83,8 +75,8 @@ DaikinEkhheComponent::EkhheError DaikinEkhheComponent::process_uart_buffer() {
     return EKHHE_ERROR_CHECKSUM;
   }
 
+  // Dispatch based on packet type
   uint8_t packet_type = buffer_[0];
-
   switch (packet_type) {
     case DD_PACKET_START_BYTE:
       parse_dd_packet();
@@ -184,7 +176,18 @@ void DaikinEkhheComponent::parse_d2_packet() {
 
   // update selects
   std::map<std::string, float> select_values = {
-      {POWER_STATUS, buffer_[D2_PACKET_POWER_IDX]},
+      // Some variables are bitmasks - clean these up later by parameterizing
+      // Mask 1
+      {POWER_STATUS,           buffer_[D2_PACKET_MASK1_IDX] & 0x01},
+      {P39_EEV_MODE,          (buffer_[D2_PACKET_MASK1_IDX] & 0x04) >> 2},
+      {P13_HW_CIRC_PUMP_MODE, (buffer_[D2_PACKET_MASK1_IDX] & 0x10) >> 4},
+      // Mask 2
+      {P11_DISP_WAT_T_PROBE,   buffer_[D2_PACKET_MASK2_IDX] & 0x01},
+      {P15_SAFETY_SW_TYPE,    (buffer_[D2_PACKET_MASK2_IDX] & 0x02) >> 1},
+      {P5_DEFROST_MODE,       (buffer_[D2_PACKET_MASK2_IDX] & 0x04) >> 2},
+      {P6_EHEATER_DEFROSTING, (buffer_[D2_PACKET_MASK2_IDX] & 0x08) >> 3},
+      {P33_EEV_CONTROL,       (buffer_[D2_PACKET_MASK2_IDX] & 0x10) >> 4},
+      // The rest
       {OPERATIONAL_MODE, buffer_[D2_PACKET_MODE_IDX]},
       {P24_OFF_PEAK_MODE, buffer_[D2_PACKET_P24_IDX]},
       {P16_SOLAR_MODE_INT, buffer_[D2_PACKET_P16_IDX]},
@@ -194,6 +197,8 @@ void DaikinEkhheComponent::parse_d2_packet() {
   for (const auto &entry : select_values) {
     set_select_value(entry.first, entry.second);
   }
+
+  update_timestamp( buffer_[D2_PACKET_HOUR_IDX], buffer_[D2_PACKET_MIN_IDX]);
 
   print_buffer();
   return;
@@ -244,6 +249,10 @@ void DaikinEkhheComponent::register_select(const std::string &select_name, selec
   }
 }
 
+void DaikinEkhheComponent::register_timestamp_sensor(text_sensor::TextSensor *sensor) {
+    this->timestamp_sensor_ = sensor;
+    ESP_LOGI(TAG, "Registered timestamp sensor");
+}
 
 void DaikinEkhheComponent::set_sensor_value(const std::string &sensor_name, float value) {
   if (sensors_.find(sensor_name) != sensors_.end()) {
@@ -270,7 +279,6 @@ void DaikinEkhheComponent::set_number_value(const std::string &number_name, floa
 void DaikinEkhheComponent::set_select_value(const std::string &select_name, int value) {
   // This sets a select value that's been gotten from the UART stream, not something that's 
   // set through the API or UI
-
   if (selects_.count(select_name)) {
     DaikinEkhheSelect *select = selects_[select_name];
 
@@ -283,6 +291,15 @@ void DaikinEkhheComponent::set_select_value(const std::string &select_name, int 
             }
         }
   }
+}
+
+void DaikinEkhheComponent::update_timestamp(uint8_t hour, uint8_t minute) {
+    if (this->timestamp_sensor_ != nullptr) {
+        char timestamp[6];
+        snprintf(timestamp, sizeof(timestamp), "%02d:%02d", hour, minute);
+        this->timestamp_sensor_->publish_state(timestamp);
+        ESP_LOGI(TAG, "Updated timestamp: %s", timestamp);
+    }
 }
 
 void DaikinEkhheComponent::send_uart_command(int number_id, float value) {
@@ -325,7 +342,6 @@ void DaikinEkhheComponent::dump_config() {
         }
     }
 
-
     // needs to be 9600/N/1
     this->check_uart_settings(9600, 1, esphome::uart::UART_CONFIG_PARITY_NONE, 8);
 }
@@ -351,7 +367,7 @@ void DaikinEkhheNumber::control(float value) {
 }
 
 void DaikinEkhheSelect::control(const std::string &value) {
-    ESP_LOGI(TAG, "Select contro called: %s", value.c_str());
+    ESP_LOGI(TAG, "Select control called: %s", value.c_str());
 
     // Update value in ESPHome
     this->publish_state(value);
@@ -360,10 +376,6 @@ void DaikinEkhheSelect::control(const std::string &value) {
     // send_uart_command(value);  // Uncomment if needed
 }
 
-//void DaikinEkhheSelect::setSelectMappings(std::vector<uint8_t> mappings)
-//{
-//    this->mappings = std::move(mappings);
-//}
 
 }  // namespace daikin_ekkhe
 }  // namespace esphome

@@ -9,7 +9,7 @@
 #include "esphome/components/number/number.h"
 #include "esphome/components/select/select.h"
 //#include "esphome/components/switch_/switch.h"
-//#include "esphome/components/text_sensor/text_sensor.h"
+#include "esphome/components/text_sensor/text_sensor.h"
 #include "esphome/components/uart/uart.h"
 
 
@@ -66,13 +66,14 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
   void register_binary_sensor(const std::string &sensor_name, esphome::binary_sensor::BinarySensor *binary_sensor);
   void register_number(const std::string &number_name, esphome::number::Number *number);
   void register_select(const std::string &select_name, select::Select *select);
-
+  void register_timestamp_sensor(esphome::text_sensor::TextSensor *sensor);
 
   // Methods to update values dynamically (only for registered components)
   void set_sensor_value(const std::string &sensor_name, float value);
   void set_binary_sensor_value(const std::string &sensor_name, bool value);
   void set_number_value(const std::string &number_name, float value);
   void set_select_value(const std::string &select_name, int value);
+  void update_timestamp(uint8_t hour, uint8_t minute);
 
   enum EkkheDDPacket {
     DD_PACKET_START_IDX = 0,
@@ -92,7 +93,8 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
 
   enum EkhheD2Packet {
     D2_PACKET_START_IDX = 0,
-    D2_PACKET_POWER_IDX = 1,
+    D2_PACKET_MASK1_IDX = 1,
+    D2_PACKET_MASK2_IDX = 2,
     D2_PACKET_MODE_IDX  = 3,
     D2_PACKET_P4_IDX    = 4,  // CONFIRMED
     D2_PACKET_P2_IDX    = 7,  // CONFIRMED
@@ -105,8 +107,10 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
     D2_PACKET_P18_IDX   = 34, // TBC
     D2_PACKET_P19_IDX   = 35, // TBC
     D2_PACKET_P20_IDX   = 36, // TBC
-    D2_PACKET_P22_IDX   = 38,  // TBC
+    D2_PACKET_P22_IDX   = 38, // TBC
     D2_PACKET_P36_IDX   = 43, // TBC
+    D2_PACKET_HOUR_IDX  = 56,
+    D2_PACKET_MIN_IDX   = 57,
     D2_PACKET_P47_IDX   = 59, // TBC
     D2_PACKET_P48_IDX   = 60, // TBC
     D2_PACKET_P49_IDX   = 61, // TBC
@@ -135,23 +139,23 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
     CC_PACKET_SIZE      = 71,
   };
 
+  // This is the TX/control packet
+  enum EkhheCDPacket {
+    CD_PACKET_START_IDX = 0,
+    CD_PACKET_END       = 70,
+    CD_PACKET_SIZE      = 71,
+  };
+
+
 
  private:
   std::map<std::string, esphome::sensor::Sensor *> sensors_;
   std::map<std::string, esphome::binary_sensor::BinarySensor *> binary_sensors_;
   std::map<std::string, esphome::number::Number *> numbers_;
-  //std::map<std::string, esphome::select::Select *> selects_;
   std::map<std::string, DaikinEkhheSelect *> selects_;
+  text_sensor::TextSensor *timestamp_sensor_ = nullptr;
 
-  //std::map<int, esphome::switch::Switch  *> switches_;
-
-
-  std::vector<uint8_t> buffer_;  // Stores incoming UART bytes
-  uint8_t expected_length_ = 0;  // Expected packet length
-  bool receiving_ = false;       // If we're currently receiving a packet
-
-
-  DaikinEkhheComponent::EkhheError read_packet_();
+  // UART Processing
   uint8_t ekhhe_checksum(const std::vector<uint8_t>& data_bytes);
   void parse_dd_packet();
   void parse_d2_packet();
@@ -160,13 +164,12 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
   void parse_cc_packet();
   void print_buffer();
 
-
-
-  // UART Processing
+  std::vector<uint8_t> buffer_;  // Stores incoming UART bytes
+  uint8_t expected_length_ = 0;  // Expected packet length
+  bool receiving_ = false;       // If we're currently receiving a packet
   DaikinEkhheComponent::EkhheError process_uart_buffer();
   void send_uart_command(int number_id, float value);
   void send_uart_switch_command(int switch_id, bool state);
-
 };
 
 }  // namespace daikin_ekkhe

@@ -26,6 +26,8 @@ static const std::string DIG3_CONFIG             = "dig3_config";
 static const std::string POWER_STATUS            = "power_status";
 static const std::string OPERATIONAL_MODE        = "operational_mode";
 static const std::string TARGET_TEMPERATURE      = "target_temperature";
+static const std::string CURRENT_TIME            = "current_time";
+
 
 static const std::string P1_LOW_WAT_PROBE_HYST   = "low_water_hp_hysteris";
 static const std::string P2_HEAT_ON_DELAY        = "elec_heater_switch_on_delay";
