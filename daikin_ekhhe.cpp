@@ -168,6 +168,11 @@ void DaikinEkhheComponent::parse_d2_packet() {
       {P50_ANTIFREEZE_SET, buffer_[D2_PACKET_P50_IDX]},
       {P51_EVA_HIGH_SET, buffer_[D2_PACKET_P51_IDX]},
       {P52_EVA_LOW_SET, buffer_[D2_PACKET_P52_IDX]},
+      {P7_DEFROST_CYCLE_DELAY, buffer_[D2_PACKET_P7_IDX]},
+      {P8_DEFR_START_THRES, (int8_t)buffer_[D2_PACKET_P8_IDX]},
+      {P9_DEFR_STOP_THRES, buffer_[D2_PACKET_P9_IDX]},
+      {P10_DEFR_MAX_DURATION, buffer_[D2_PACKET_P10_IDX]},
+      {P17_HP_START_DELAY_DIG1, buffer_[D2_PACKET_P17_IDX]},
   };
 
   for (const auto &entry : number_values) {
@@ -192,6 +197,8 @@ void DaikinEkhheComponent::parse_d2_packet() {
       {P24_OFF_PEAK_MODE, buffer_[D2_PACKET_P24_IDX]},
       {P16_SOLAR_MODE_INT, buffer_[D2_PACKET_P16_IDX]},
       {P23_PV_MODE_INT, buffer_[D2_PACKET_P23_IDX]},
+      {P14_EVA_BLOWER_TYPE, buffer_[D2_PACKET_P14_IDX]},
+      {P12_EXT_PUMP_MODE, buffer_[D2_PACKET_P12_IDX]},
   };
 
   for (const auto &entry : select_values) {

@@ -97,13 +97,21 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
     D2_PACKET_MASK2_IDX = 2,
     D2_PACKET_MODE_IDX  = 3,
     D2_PACKET_P4_IDX    = 4,  // CONFIRMED
+    D2_PACKET_P7_IDX    = 5,
+    D2_PACKET_P10_IDX   = 6,
     D2_PACKET_P2_IDX    = 7,  // CONFIRMED
-    D2_PACKET_TTEMP_IDX = 14, // CONFIRMED
+    D2_PACKET_P8_IDX    = 11,
+    D2_PACKET_P9_IDX    = 12,
+    D2_PACKET_TTEMP_IDX = 14, // CONFIRMED (for automatic mode)
+    // TODO: add indexes for target temp for other modes
     D2_PACKET_P1_IDX    = 20, // CONFIRMED
     D2_PACKET_P3_IDX    = 22, // CONFIRMED
+    D2_PACKET_P12_IDX   = 28,
+    D2_PACKET_P14_IDX   = 29,
     D2_PACKET_P24_IDX   = 30,
     D2_PACKET_P16_IDX   = 31,
     D2_PACKET_P23_IDX   = 32,
+    D2_PACKET_P17_IDX   = 33, 
     D2_PACKET_P18_IDX   = 34, // TBC
     D2_PACKET_P19_IDX   = 35, // TBC
     D2_PACKET_P20_IDX   = 36, // TBC

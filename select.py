@@ -91,7 +91,7 @@ CONFIG_SCHEMA = (
             }),
             cv.Optional(P14_EVA_BLOWER_TYPE): select.SELECT_SCHEMA.extend({
                 cv.GenerateID(): cv.declare_id(DaikinEkhheSelect),
-                cv.Optional(CONF_OPTIONS, default={0: 'EC', 1: 'AC', 2: 'AC double speed'}): ensure_option_map
+                cv.Optional(CONF_OPTIONS, default={0: 'EC', 1: 'AC', 2: 'AC double speed', 3: 'EC dynamic speed control'}): ensure_option_map
             }),
             cv.Optional(P15_SAFETY_SW_TYPE): select.SELECT_SCHEMA.extend({
                 cv.GenerateID(): cv.declare_id(DaikinEkhheSelect),
