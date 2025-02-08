@@ -7,6 +7,7 @@
 #include "daikin_ekhhe_const.h"
 #include "esphome/components/binary_sensor/binary_sensor.h"
 #include "esphome/components/number/number.h"
+#include "esphome/components/select/select.h"
 //#include "esphome/components/switch_/switch.h"
 //#include "esphome/components/text_sensor/text_sensor.h"
 #include "esphome/components/uart/uart.h"
@@ -20,6 +21,19 @@ class DaikinEkhheNumber : public number::Number {
   void control(float value) override;
 };
 
+class DaikinEkhheSelect : public select::Select, public Component {
+ public:
+  void control(const std::string &value) override;
+  void set_select_mappings(std::map<std::string, int> mappings) {
+    this->select_mappings_ = std::move(mappings);
+  }
+  std::map<std::string, int> get_select_mappings() {
+      return this->select_mappings_;
+  }
+
+  private:
+   std::map<std::string, int> select_mappings_; // this stores the number to read/write for each select option
+};
 
 class DaikinEkhheComponent : public Component, public uart::UARTDevice {
  public:
@@ -51,13 +65,14 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
   void register_sensor(const std::string &sensor_name, esphome::sensor::Sensor *sensor);
   void register_binary_sensor(const std::string &sensor_name, esphome::binary_sensor::BinarySensor *binary_sensor);
   void register_number(const std::string &number_name, esphome::number::Number *number);
-  //void register_switch(int switch_id, esphome::switch::Switch *switch);
+  void register_select(const std::string &select_name, select::Select *select);
+
 
   // Methods to update values dynamically (only for registered components)
   void set_sensor_value(const std::string &sensor_name, float value);
   void set_binary_sensor_value(const std::string &sensor_name, bool value);
   void set_number_value(const std::string &number_name, float value);
-  //void set_switch_state(int switch_id, bool state);
+  void set_select_value(const std::string &select_name, int value);
 
   enum EkkheDDPacket {
     DD_PACKET_START_IDX = 0,
@@ -125,6 +140,9 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
   std::map<std::string, esphome::sensor::Sensor *> sensors_;
   std::map<std::string, esphome::binary_sensor::BinarySensor *> binary_sensors_;
   std::map<std::string, esphome::number::Number *> numbers_;
+  //std::map<std::string, esphome::select::Select *> selects_;
+  std::map<std::string, DaikinEkhheSelect *> selects_;
+
   //std::map<int, esphome::switch::Switch  *> switches_;
 
 

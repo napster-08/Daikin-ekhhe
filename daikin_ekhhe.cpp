@@ -157,6 +157,7 @@ void DaikinEkhheComponent::parse_dd_packet() {
 }
 
 void DaikinEkhheComponent::parse_d2_packet() {
+
   // update numbers
   std::map<std::string, float> number_values = {
       {P4_ANTL_DURATION, buffer_[D2_PACKET_P4_IDX]},
@@ -179,6 +180,19 @@ void DaikinEkhheComponent::parse_d2_packet() {
 
   for (const auto &entry : number_values) {
     set_number_value(entry.first, entry.second);
+  }
+
+  // update selects
+  std::map<std::string, float> select_values = {
+      {POWER_STATUS, buffer_[D2_PACKET_POWER_IDX]},
+      {OPERATIONAL_MODE, buffer_[D2_PACKET_MODE_IDX]},
+      {P24_OFF_PEAK_MODE, buffer_[D2_PACKET_P24_IDX]},
+      {P16_SOLAR_MODE_INT, buffer_[D2_PACKET_P16_IDX]},
+      {P23_PV_MODE_INT, buffer_[D2_PACKET_P23_IDX]},
+  };
+
+  for (const auto &entry : select_values) {
+    set_select_value(entry.first, entry.second);
   }
 
   print_buffer();
@@ -221,13 +235,15 @@ void DaikinEkhheComponent::register_number(const std::string &number_name, espho
     ESP_LOGI(TAG, "Registered Number: %s", number_name.c_str());
   }
 }
-/*
-void DaikinEkhheComponent::register_switch(int switch_id, esphome::switch::Switch *sw) {
-  if (sw != nullptr) {
-    switches_[switch_id] = sw;
+
+void DaikinEkhheComponent::register_select(const std::string &select_name, select::Select *select) {
+  if (select != nullptr) {
+      //selects_[select_name] = select;
+      selects_[select_name] = static_cast<DaikinEkhheSelect *>(select);
+      ESP_LOGI(TAG, "Registered Select: %s", select_name.c_str());
   }
 }
-*/
+
 
 void DaikinEkhheComponent::set_sensor_value(const std::string &sensor_name, float value) {
   if (sensors_.find(sensor_name) != sensors_.end()) {
@@ -251,17 +267,23 @@ void DaikinEkhheComponent::set_number_value(const std::string &number_name, floa
   }
 }
 
-/*
-void DaikinEkhheComponent::set_switch_state(int switch_id, bool state) {
-  auto it = switches_.find(switch_id);
-  if (it != switches_.end() && it->second != nullptr) {
-    it->second->publish_state(state);
+void DaikinEkhheComponent::set_select_value(const std::string &select_name, int value) {
+  // This sets a select value that's been gotten from the UART stream, not something that's 
+  // set through the API or UI
 
-    // Send a command via UART TX when the switch is toggled
-    send_uart_switch_command(switch_id, state);
+  if (selects_.count(select_name)) {
+    DaikinEkhheSelect *select = selects_[select_name];
+
+        // Find the corresponding string option for the numeric value
+        for (const auto &entry : select->get_select_mappings()) {
+            if (entry.second == value) {                
+                // Update ESPHome with the new selected value
+                select->publish_state(entry.first);
+                return;
+            }
+        }
   }
 }
-*/
 
 void DaikinEkhheComponent::send_uart_command(int number_id, float value) {
   ESP_LOGI(TAG, "Sending UART command: Number ID %d -> Value %.2f", number_id, value);
@@ -288,11 +310,6 @@ void DaikinEkhheComponent::send_uart_switch_command(int switch_id, bool state) {
 
 uint8_t DaikinEkhheComponent::ekhhe_checksum(const std::vector<uint8_t>& data_bytes) {
   // Compute the checksum as (sum of data bytes) mod 256 + 170
-  //uint16_t sum = 0;
-  //for (size_t i = 0; i < length; i++) {
-  //    sum += data_bytes[i];
-  // }
-  //return (sum % 256 + 170) & 0xFF; // Ensure it stays within 8-bit range
   uint16_t sum = std::accumulate(data_bytes.begin(), data_bytes.end()-1, 0);
   return (sum % 256 + 170) & 0xFF;
 }
@@ -323,7 +340,7 @@ void DaikinEkhheComponent::update() {
 
 
 void DaikinEkhheNumber::control(float value) {
-    ESP_LOGI("daikin_ekhhe", "Number control called: %.2f", value);
+    ESP_LOGI(TAG, "Number control called: %.2f", value);
 
     // Update value in ESPHome
     this->publish_state(value);
@@ -332,6 +349,21 @@ void DaikinEkhheNumber::control(float value) {
     // Will need to later implement this to control numbers over UART
     //send_uart_command(value);
 }
+
+void DaikinEkhheSelect::control(const std::string &value) {
+    ESP_LOGI(TAG, "Select contro called: %s", value.c_str());
+
+    // Update value in ESPHome
+    this->publish_state(value);
+
+    // Send selection over UART
+    // send_uart_command(value);  // Uncomment if needed
+}
+
+//void DaikinEkhheSelect::setSelectMappings(std::vector<uint8_t> mappings)
+//{
+//    this->mappings = std::move(mappings);
+//}
 
 }  // namespace daikin_ekkhe
 }  // namespace esphome
