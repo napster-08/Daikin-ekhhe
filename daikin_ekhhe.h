@@ -16,9 +16,20 @@
 namespace esphome {
 namespace daikin_ekkhe {
 
+class DaikinEkhheComponent;  // Forward declaration
+
+
 class DaikinEkhheNumber : public number::Number {
  public:
-  void control(float value) override;
+    void control(float value) override;
+    void set_parent(DaikinEkhheComponent *parent) { this->parent_ = parent; }
+    // Needed so we can set this from python and then reference it in the control function
+    void set_internal_id(const std::string &id) { this->internal_id_ = id; }
+
+
+  private:
+    DaikinEkhheComponent *parent_;
+    std::string internal_id_;
 };
 
 class DaikinEkhheSelect : public select::Select, public Component {
@@ -30,9 +41,12 @@ class DaikinEkhheSelect : public select::Select, public Component {
   std::map<std::string, int> get_select_mappings() {
       return this->select_mappings_;
   }
+  void set_parent(DaikinEkhheComponent *parent) { this->parent_ = parent; }
+
 
   private:
    std::map<std::string, int> select_mappings_; // this stores the number to read/write for each select option
+   DaikinEkhheComponent *parent_;
 };
 
 class DaikinEkhheComponent : public Component, public uart::UARTDevice {
@@ -60,6 +74,7 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
   void update();
   void dump_config() override;
   void on_shutdown();
+  void set_update_interval(int interval_ms);
 
   // Methods to register sensors, binary sensors, and numbers
   void register_sensor(const std::string &sensor_name, esphome::sensor::Sensor *sensor);
@@ -96,10 +111,10 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
     D2_PACKET_MASK1_IDX = 1,
     D2_PACKET_MASK2_IDX = 2,
     D2_PACKET_MODE_IDX  = 3,
-    D2_PACKET_P4_IDX    = 4,  // CONFIRMED
+    D2_PACKET_P4_IDX    = 4,
     D2_PACKET_P7_IDX    = 5,
     D2_PACKET_P10_IDX   = 6,
-    D2_PACKET_P2_IDX    = 7,  // CONFIRMED
+    D2_PACKET_P2_IDX    = 7,
     D2_PACKET_P29_IDX   = 9,
     D2_PACKET_P31_IDX   = 10,
     D2_PACKET_P8_IDX    = 11,
@@ -108,10 +123,9 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
     D2_PACKET_AUTO_TTARGET_IDX      = 14,
     D2_PACKET_BOOST_TTGARGET_IDX    = 15,
     D2_PACKET_ELECTRIC_TTARGET_IDX  = 16,
-    // TODO: add indexes for target temp for other modes
-    D2_PACKET_P1_IDX    = 20, // CONFIRMED
+    D2_PACKET_P1_IDX    = 20,
     D2_PACKET_P32_IDX   = 21,
-    D2_PACKET_P3_IDX    = 22, // CONFIRMED
+    D2_PACKET_P3_IDX    = 22,
     D2_PACKET_P30_IDX   = 23,
     D2_PACKET_P25_IDX   = 24,
     D2_PACKET_P26_IDX   = 25,
@@ -123,16 +137,16 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
     D2_PACKET_P16_IDX   = 31,
     D2_PACKET_P23_IDX   = 32,
     D2_PACKET_P17_IDX   = 33, 
-    D2_PACKET_P18_IDX   = 34, // TBC
-    D2_PACKET_P19_IDX   = 35, // TBC
-    D2_PACKET_P20_IDX   = 36, // TBC
+    D2_PACKET_P18_IDX   = 34,
+    D2_PACKET_P19_IDX   = 35,
+    D2_PACKET_P20_IDX   = 36,
     D2_PACKET_P21_IDX   = 37,
-    D2_PACKET_P22_IDX   = 38, // TBC
+    D2_PACKET_P22_IDX   = 38,
     D2_PACKET_P34_IDX   = 39,
     D2_PACKET_P37_IDX   = 40,
     D2_PACKET_P38_IDX   = 41,
     D2_PACKET_P40_IDX   = 42,
-    D2_PACKET_P36_IDX   = 43, // TBC
+    D2_PACKET_P36_IDX   = 43,
     D2_PACKET_P35_IDX   = 44,
     D2_PACKET_P41_IDX   = 45,
     D2_PACKET_P42_IDX   = 46,
@@ -142,12 +156,12 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
     D2_PACKET_P46_IDX   = 50,
     D2_PACKET_HOUR_IDX  = 56,
     D2_PACKET_MIN_IDX   = 57,
-    D2_PACKET_P47_IDX   = 59, // TBC
-    D2_PACKET_P48_IDX   = 60, // TBC
-    D2_PACKET_P49_IDX   = 61, // TBC
-    D2_PACKET_P50_IDX   = 62, // TBC
-    D2_PACKET_P51_IDX   = 63, // TBC
-    D2_PACKET_P52_IDX   = 64, // TBC 
+    D2_PACKET_P47_IDX   = 59,
+    D2_PACKET_P48_IDX   = 60,
+    D2_PACKET_P49_IDX   = 61,
+    D2_PACKET_P50_IDX   = 62,
+    D2_PACKET_P51_IDX   = 63,
+    D2_PACKET_P52_IDX   = 64,
     D2_PACKET_END       = 70, 
     D2_PACKET_SIZE      = 71,
   };
@@ -166,7 +180,62 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
 
   enum EkhheCCPacket {
     CC_PACKET_START_IDX = 0,
-    CC_PACKET_END       = 70,
+    CC_PACKET_MASK1_IDX = 1,
+    CC_PACKET_MASK2_IDX = 2,
+    CC_PACKET_MODE_IDX  = 3,
+    CC_PACKET_P4_IDX    = 4,
+    CC_PACKET_P7_IDX    = 5,
+    CC_PACKET_P10_IDX   = 6,
+    CC_PACKET_P2_IDX    = 7, 
+    CC_PACKET_P29_IDX   = 9,
+    CC_PACKET_P31_IDX   = 10,
+    CC_PACKET_P8_IDX    = 11,
+    CC_PACKET_P9_IDX    = 12,
+    CC_PACKET_ECO_TTARGET_IDX       = 13,
+    CC_PACKET_AUTO_TTARGET_IDX      = 14,
+    CC_PACKET_BOOST_TTGARGET_IDX    = 15,
+    CC_PACKET_ELECTRIC_TTARGET_IDX  = 16,
+    CC_PACKET_P1_IDX    = 20, 
+    CC_PACKET_P32_IDX   = 21,
+    CC_PACKET_P3_IDX    = 22, 
+    CC_PACKET_P30_IDX   = 23,
+    CC_PACKET_P25_IDX   = 24,
+    CC_PACKET_P26_IDX   = 25,
+    CC_PACKET_P27_IDX   = 26,
+    CC_PACKET_P28_IDX   = 27,
+    CC_PACKET_P12_IDX   = 28,
+    CC_PACKET_P14_IDX   = 29,
+    CC_PACKET_P24_IDX   = 30,
+    CC_PACKET_P16_IDX   = 31,
+    CC_PACKET_P23_IDX   = 32,
+    CC_PACKET_P17_IDX   = 33, 
+    CC_PACKET_P18_IDX   = 34,
+    CC_PACKET_P19_IDX   = 35,
+    CC_PACKET_P20_IDX   = 36,
+    CC_PACKET_P21_IDX   = 37,
+    CC_PACKET_P22_IDX   = 38,
+    CC_PACKET_P34_IDX   = 39,
+    CC_PACKET_P37_IDX   = 40,
+    CC_PACKET_P38_IDX   = 41,
+    CC_PACKET_P40_IDX   = 42,
+    CC_PACKET_P36_IDX   = 43,
+    CC_PACKET_P35_IDX   = 44,
+    CC_PACKET_P41_IDX   = 45,
+    CC_PACKET_P42_IDX   = 46,
+    CC_PACKET_P43_IDX   = 47,
+    CC_PACKET_P44_IDX   = 48,
+    CC_PACKET_P45_IDX   = 49,
+    CC_PACKET_P46_IDX   = 50,
+    CC_PACKET_HOUR_IDX  = 57,
+    CC_PACKET_MIN_IDX   = 58,
+    CC_PACKET_P47_IDX   = 60, 
+    CC_PACKET_P48_IDX   = 61, 
+    CC_PACKET_P49_IDX   = 62, 
+    CC_PACKET_P50_IDX   = 63, 
+    CC_PACKET_P51_IDX   = 64, 
+    CC_PACKET_P52_IDX   = 65,
+    CC_PACKET_P54_IDX   = 60,
+    CC_PACKET_END       = 70, 
     CC_PACKET_SIZE      = 71,
   };
 
@@ -180,27 +249,41 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
 
 
  private:
+  // variables for sensors etc.
   std::map<std::string, esphome::sensor::Sensor *> sensors_;
   std::map<std::string, esphome::binary_sensor::BinarySensor *> binary_sensors_;
   std::map<std::string, esphome::number::Number *> numbers_;
   std::map<std::string, DaikinEkhheSelect *> selects_;
   text_sensor::TextSensor *timestamp_sensor_ = nullptr;
-
   esphome::time::RealTimeClock *clock;
 
   // UART Processing
   uint8_t ekhhe_checksum(const std::vector<uint8_t>& data_bytes);
-  void parse_dd_packet();
-  void parse_d2_packet();
-  void parse_d4_packet();
-  void parse_c1_packet();
-  void parse_cc_packet();
-  void print_buffer();
 
+  void parse_dd_packet(std::vector<uint8_t> buffer);
+  void parse_d2_packet(std::vector<uint8_t> buffer);
+  void parse_d4_packet(std::vector<uint8_t> buffer);
+  void parse_c1_packet(std::vector<uint8_t> buffer);
+  void parse_cc_packet(std::vector<uint8_t> buffer);
+  void print_buffer();
+  void start_uart_cycle();
+  void process_packet_set();
   std::vector<uint8_t> buffer_;  // Stores incoming UART bytes
+  std::vector<uint8_t> last_d2_packet_;
+  std::vector<uint8_t> last_dd_packet_;
+  std::vector<uint8_t> last_cc_packet_;  // Always store CC for sending commands
+  std::vector<uint8_t> last_c1_packet_;
+  std::vector<uint8_t> last_d4_packet_;
+
   uint8_t expected_length_ = 0;  // Expected packet length
   bool receiving_ = false;       // If we're currently receiving a packet
-  DaikinEkhheComponent::EkhheError process_uart_buffer();  
+  DaikinEkhheComponent::EkhheError process_uart_buffer(); 
+  void send_uart_command(const std::string &parameter, int value);
+  bool uart_active_ = false;
+
+  // Cycle management
+  unsigned long last_process_time_ = 0;
+   unsigned long update_interval_ = 10000;
 };
 
 }  // namespace daikin_ekkhe

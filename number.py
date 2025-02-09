@@ -446,6 +446,8 @@ async def setup_conf(config, key, hub):
             max_value=conf[CONF_MAX_VALUE], 
             step=conf[CONF_STEP])
         cg.add(getattr(hub, "register_number")(key, num))
+        cg.add(num.set_parent(hub))
+        cg.add(num.set_internal_id(key))
 
 
 async def to_code(config):
