@@ -200,9 +200,7 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
   std::vector<uint8_t> buffer_;  // Stores incoming UART bytes
   uint8_t expected_length_ = 0;  // Expected packet length
   bool receiving_ = false;       // If we're currently receiving a packet
-  DaikinEkhheComponent::EkhheError process_uart_buffer();
-  void send_uart_command(int number_id, float value);
-  void send_uart_switch_command(int switch_id, bool state);
+  DaikinEkhheComponent::EkhheError process_uart_buffer();  
 };
 
 }  // namespace daikin_ekkhe

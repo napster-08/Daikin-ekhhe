@@ -357,28 +357,6 @@ void DaikinEkhheComponent::update_timestamp(uint8_t hour, uint8_t minute) {
     }
 }
 
-void DaikinEkhheComponent::send_uart_command(int number_id, float value) {
-  ESP_LOGI(TAG, "Sending UART command: Number ID %d -> Value %.2f", number_id, value);
-  
-  // TODO: Format the UART command correctly according to the device protocol
-  char command[20];
-  snprintf(command, sizeof(command), "SET %d %.2f\n", number_id, value);
-  
-  // Send the command over UART
-  this->write_str(command);
-}
-
-void DaikinEkhheComponent::send_uart_switch_command(int switch_id, bool state) {
-  ESP_LOGI(TAG, "Sending UART switch command: Switch ID %d -> State %s", switch_id, state ? "ON" : "OFF");
-  
-  // TODO: Format the UART command correctly according to the device protocol
-  char command[20];
-  snprintf(command, sizeof(command), "SWITCH %d %d\n", switch_id, state ? 1 : 0);
-  
-  // Send the command over UART
-  this->write_str(command);
-}
-
 
 uint8_t DaikinEkhheComponent::ekhhe_checksum(const std::vector<uint8_t>& data_bytes) {
   // Compute the checksum as (sum of data bytes) mod 256 + 170
