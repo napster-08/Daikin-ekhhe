@@ -82,7 +82,10 @@ TYPES = [
     P50_ANTIFREEZE_SET,
     P51_EVA_HIGH_SET,
     P52_EVA_LOW_SET,
-    TARGET_TEMPERATURE,
+    AUTO_T_TEMPERATURE,
+    ECO_T_TEMPERATURE,
+    BOOST_T_TEMPERATURE,
+    ELECTRIC_T_TEMPERATURE,
 ]
 
 CONFIG_SCHEMA = (
@@ -395,10 +398,34 @@ CONFIG_SCHEMA = (
                 cv.Optional(CONF_STEP, default=1): cv.positive_float,
                 cv.Optional(CONF_UNIT_OF_MEASUREMENT, default=UNIT_PERCENT): cv.string,
             }), 
-            cv.Optional(TARGET_TEMPERATURE): number.NUMBER_SCHEMA.extend({
+            cv.Optional(ECO_T_TEMPERATURE): number.NUMBER_SCHEMA.extend({
                 cv.GenerateID(): cv.declare_id(DaikinEkhheNumber),
-                cv.Optional(CONF_MAX_VALUE, default=100): cv.float_,
-                cv.Optional(CONF_MIN_VALUE, default=0): cv.float_,
+                cv.Optional(CONF_MAX_VALUE, default=62): cv.float_,
+                cv.Optional(CONF_MIN_VALUE, default=43): cv.float_,
+                cv.Optional(CONF_STEP, default=1): cv.positive_float,
+                cv.Optional(CONF_DEVICE_CLASS, default=DEVICE_CLASS_TEMPERATURE): cv.string,
+                cv.Optional(CONF_UNIT_OF_MEASUREMENT, default=UNIT_CELSIUS): cv.string,
+            }),
+            cv.Optional(AUTO_T_TEMPERATURE): number.NUMBER_SCHEMA.extend({
+                cv.GenerateID(): cv.declare_id(DaikinEkhheNumber),
+                cv.Optional(CONF_MAX_VALUE, default=62): cv.float_,
+                cv.Optional(CONF_MIN_VALUE, default=43): cv.float_,
+                cv.Optional(CONF_STEP, default=1): cv.positive_float,
+                cv.Optional(CONF_DEVICE_CLASS, default=DEVICE_CLASS_TEMPERATURE): cv.string,
+                cv.Optional(CONF_UNIT_OF_MEASUREMENT, default=UNIT_CELSIUS): cv.string,
+            }),
+            cv.Optional(BOOST_T_TEMPERATURE): number.NUMBER_SCHEMA.extend({
+                cv.GenerateID(): cv.declare_id(DaikinEkhheNumber),
+                cv.Optional(CONF_MAX_VALUE, default=75): cv.float_,
+                cv.Optional(CONF_MIN_VALUE, default=43): cv.float_,
+                cv.Optional(CONF_STEP, default=1): cv.positive_float,
+                cv.Optional(CONF_DEVICE_CLASS, default=DEVICE_CLASS_TEMPERATURE): cv.string,
+                cv.Optional(CONF_UNIT_OF_MEASUREMENT, default=UNIT_CELSIUS): cv.string,
+            }),
+            cv.Optional(ELECTRIC_T_TEMPERATURE): number.NUMBER_SCHEMA.extend({
+                cv.GenerateID(): cv.declare_id(DaikinEkhheNumber),
+                cv.Optional(CONF_MAX_VALUE, default=75): cv.float_,
+                cv.Optional(CONF_MIN_VALUE, default=43): cv.float_,
                 cv.Optional(CONF_STEP, default=1): cv.positive_float,
                 cv.Optional(CONF_DEVICE_CLASS, default=DEVICE_CLASS_TEMPERATURE): cv.string,
                 cv.Optional(CONF_UNIT_OF_MEASUREMENT, default=UNIT_CELSIUS): cv.string,

@@ -8,9 +8,9 @@
 #include "esphome/components/binary_sensor/binary_sensor.h"
 #include "esphome/components/number/number.h"
 #include "esphome/components/select/select.h"
-//#include "esphome/components/switch_/switch.h"
 #include "esphome/components/text_sensor/text_sensor.h"
 #include "esphome/components/uart/uart.h"
+#include "esphome/components/time/real_time_clock.h"
 
 
 namespace esphome {
@@ -100,12 +100,23 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
     D2_PACKET_P7_IDX    = 5,
     D2_PACKET_P10_IDX   = 6,
     D2_PACKET_P2_IDX    = 7,  // CONFIRMED
+    D2_PACKET_P29_IDX   = 9,
+    D2_PACKET_P31_IDX   = 10,
     D2_PACKET_P8_IDX    = 11,
     D2_PACKET_P9_IDX    = 12,
-    D2_PACKET_TTEMP_IDX = 14, // CONFIRMED (for automatic mode)
+    D2_PACKET_ECO_TTARGET_IDX       = 13,
+    D2_PACKET_AUTO_TTARGET_IDX      = 14,
+    D2_PACKET_BOOST_TTGARGET_IDX    = 15,
+    D2_PACKET_ELECTRIC_TTARGET_IDX  = 16,
     // TODO: add indexes for target temp for other modes
     D2_PACKET_P1_IDX    = 20, // CONFIRMED
+    D2_PACKET_P32_IDX   = 21,
     D2_PACKET_P3_IDX    = 22, // CONFIRMED
+    D2_PACKET_P30_IDX   = 23,
+    D2_PACKET_P25_IDX   = 24,
+    D2_PACKET_P26_IDX   = 25,
+    D2_PACKET_P27_IDX   = 26,
+    D2_PACKET_P28_IDX   = 27,
     D2_PACKET_P12_IDX   = 28,
     D2_PACKET_P14_IDX   = 29,
     D2_PACKET_P24_IDX   = 30,
@@ -115,8 +126,20 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
     D2_PACKET_P18_IDX   = 34, // TBC
     D2_PACKET_P19_IDX   = 35, // TBC
     D2_PACKET_P20_IDX   = 36, // TBC
+    D2_PACKET_P21_IDX   = 37,
     D2_PACKET_P22_IDX   = 38, // TBC
+    D2_PACKET_P34_IDX   = 39,
+    D2_PACKET_P37_IDX   = 40,
+    D2_PACKET_P38_IDX   = 41,
+    D2_PACKET_P40_IDX   = 42,
     D2_PACKET_P36_IDX   = 43, // TBC
+    D2_PACKET_P35_IDX   = 44,
+    D2_PACKET_P41_IDX   = 45,
+    D2_PACKET_P42_IDX   = 46,
+    D2_PACKET_P43_IDX   = 47,
+    D2_PACKET_P44_IDX   = 48,
+    D2_PACKET_P45_IDX   = 49,
+    D2_PACKET_P46_IDX   = 50,
     D2_PACKET_HOUR_IDX  = 56,
     D2_PACKET_MIN_IDX   = 57,
     D2_PACKET_P47_IDX   = 59, // TBC
@@ -162,6 +185,8 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
   std::map<std::string, esphome::number::Number *> numbers_;
   std::map<std::string, DaikinEkhheSelect *> selects_;
   text_sensor::TextSensor *timestamp_sensor_ = nullptr;
+
+  esphome::time::RealTimeClock *clock;
 
   // UART Processing
   uint8_t ekhhe_checksum(const std::vector<uint8_t>& data_bytes);

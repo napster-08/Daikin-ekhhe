@@ -25,9 +25,12 @@ static const std::string DIG3_CONFIG             = "dig3_config";
 
 static const std::string POWER_STATUS            = "power_status";
 static const std::string OPERATIONAL_MODE        = "operational_mode";
-static const std::string TARGET_TEMPERATURE      = "target_temperature";
 static const std::string CURRENT_TIME            = "current_time";
 
+static const std::string AUTO_T_TEMPERATURE      = "auto_target_temperature";
+static const std::string ECO_T_TEMPERATURE       = "eco_target_temperature";
+static const std::string BOOST_T_TEMPERATURE     = "boost_target_temperature";
+static const std::string ELECTRIC_T_TEMPERATURE  = "electric_target_temperature";
 
 static const std::string P1_LOW_WAT_PROBE_HYST   = "low_water_hp_hysteris";
 static const std::string P2_HEAT_ON_DELAY        = "elec_heater_switch_on_delay";
@@ -52,7 +55,7 @@ static const std::string P19_LOW_WAT_T_HYST      = "low_wat_probe_solar_hysteres
 static const std::string P20_SOL_DRAIN_THRES     = "solar_drain_temp_threshold";
 
 static const std::string P21_LOW_WAT_T_HP_STOP   = "low_water_hp_pv_mode_threshold";
-static const std::string P22_UP_WAT_T_EH_STOP    = "uppwer_water_eh_pv_mode_threshold";
+static const std::string P22_UP_WAT_T_EH_STOP    = "upper_water_eh_pv_mode_threshold";
 static const std::string P23_PV_MODE_INT         = "pv_mode_integration";
 static const std::string P24_OFF_PEAK_MODE       = "off_peak_working_mode";
 static const std::string P25_UP_WAT_T_OFFSET     = "upper_water_temp_probe_offset";
