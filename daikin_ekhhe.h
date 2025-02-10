@@ -2,9 +2,10 @@
 
 #include <string>
 #include <map>
+#include <type_traits>
+
 #include "esphome/core/component.h"
 #include "esphome/components/sensor/sensor.h"
-#include "daikin_ekhhe_const.h"
 #include "esphome/components/binary_sensor/binary_sensor.h"
 #include "esphome/components/number/number.h"
 #include "esphome/components/select/select.h"
@@ -12,6 +13,7 @@
 #include "esphome/components/uart/uart.h"
 #include "esphome/components/time/real_time_clock.h"
 
+#include "daikin_ekhhe_const.h"
 
 namespace esphome {
 namespace daikin_ekkhe {
@@ -26,7 +28,6 @@ class DaikinEkhheNumber : public number::Number {
     // Needed so we can set this from python and then reference it in the control function
     void set_internal_id(const std::string &id) { this->internal_id_ = id; }
 
-
   private:
     DaikinEkhheComponent *parent_;
     std::string internal_id_;
@@ -38,15 +39,17 @@ class DaikinEkhheSelect : public select::Select, public Component {
   void set_select_mappings(std::map<std::string, int> mappings) {
     this->select_mappings_ = std::move(mappings);
   }
+  // this stores the number to read/write for each select option
   std::map<std::string, int> get_select_mappings() {
       return this->select_mappings_;
   }
   void set_parent(DaikinEkhheComponent *parent) { this->parent_ = parent; }
-
+  void set_internal_id(const std::string &id) { this->internal_id_ = id; }
 
   private:
-   std::map<std::string, int> select_mappings_; // this stores the number to read/write for each select option
+   std::map<std::string, int> select_mappings_; 
    DaikinEkhheComponent *parent_;
+   std::string internal_id_;
 };
 
 class DaikinEkhheComponent : public Component, public uart::UARTDevice {
@@ -66,7 +69,6 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
   struct EkhheReading {
     uint16_t low_water_temp_probe;
   };
-  // Nothing really public.
 
   // ========== INTERNAL METHODS ==========
   void setup() override;
@@ -89,6 +91,10 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
   void set_number_value(const std::string &number_name, float value);
   void set_select_value(const std::string &select_name, int value);
   void update_timestamp(uint8_t hour, uint8_t minute);
+
+  // Allow UART command sending for Number/Select control
+  void send_uart_cc_command(uint8_t index, uint8_t value);
+
 
   enum EkkheDDPacket {
     DD_PACKET_START_IDX = 0,
@@ -246,8 +252,6 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
     CD_PACKET_SIZE      = 71,
   };
 
-
-
  private:
   // variables for sensors etc.
   std::map<std::string, esphome::sensor::Sensor *> sensors_;
@@ -278,12 +282,18 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
   uint8_t expected_length_ = 0;  // Expected packet length
   bool receiving_ = false;       // If we're currently receiving a packet
   DaikinEkhheComponent::EkhheError process_uart_buffer(); 
-  void send_uart_command(const std::string &parameter, int value);
   bool uart_active_ = false;
 
   // Cycle management
   unsigned long last_process_time_ = 0;
-   unsigned long update_interval_ = 10000;
+  unsigned long update_interval_ = 10000;
+};
+
+using namespace daikin_ekhhe;
+static const std::map<std::string, uint8_t> NUMBER_PARAM_INDEX = {
+   {P1_LOW_WAT_PROBE_HYST,   DaikinEkhheComponent::CC_PACKET_P1_IDX},
+   {P2_HEAT_ON_DELAY,        DaikinEkhheComponent::CC_PACKET_P2_IDX},
+   {P3_ANTL_SET_T,           DaikinEkhheComponent::CC_PACKET_P3_IDX},
 };
 
 }  // namespace daikin_ekkhe

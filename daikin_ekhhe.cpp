@@ -538,40 +538,28 @@ void DaikinEkhheComponent::set_update_interval(int interval_ms) {
 
 void DaikinEkhheNumber::control(float value) {
 
-    // Ensure parent component exists
-    if (this->parent_ != nullptr) {
-        // Use get_name() to determine which UART command to send
-        auto name = this->internal_id_;
-        ESP_LOGI(TAG, "Changing number value: %s -> %.2f", this->internal_id_.c_str(), value);
-
-        /*
-        if (this->get_name() == "low_water_temp_hysteresis") {
-            ESP_LOGD(TAG, "")
-            this->parent_->send_uart_command(0x01, static_cast<int>(value));  // Example: Command ID 0x01
-        } else if (this->get_name() == "heat_on_delay") {
-            this->parent_->send_uart_command(0x02, static_cast<int>(value));  // Example: Command ID 0x02
-        } else {
-            ESP_LOGW(TAG, "No matching UART command for Number: %s", this->get_name().c_str());
-        }
-        */
+    if (this->parent_ == nullptr) {
+        ESP_LOGW(TAG, "Parent component is null, cannot send command.");
+        return;
     }
 
-    if (false) {
-          // Publish new state to ESPHome
-          this->publish_state(value);
+    // Use get_name() to determine which UART command to send
+    auto name = this->internal_id_;
+    ESP_LOGI(TAG, "Changing number value: %s -> %.2f", this->internal_id_.c_str(), value);
 
+    // Get the CC array index from 
+    auto it = NUMBER_PARAM_INDEX.find(name);
+    if (it != NUMBER_PARAM_INDEX.end()) {
+        uint8_t index = it->second;
+        this->parent_->send_uart_cc_command(index, (uint8_t)value);
+        this->publish_state(value);
+    } else {
+        ESP_LOGW(TAG, "No matching UART command for Number: %s", name.c_str());
     }
 
-    //ESP_LOGI(TAG, "Number control called: %.2f", value);
-
-    // Update value in ESPHome
-    //this->publish_state(value);
-
-    // Send command via UART (example)
-    // Will need to later implement this to control numbers over UART
-    //send_uart_command(value);
 }
 
+// !! STUB function - this needs to be worked out
 void DaikinEkhheSelect::control(const std::string &value) {
     ESP_LOGI(TAG, "Select control called: %s", value.c_str());
 
@@ -583,33 +571,31 @@ void DaikinEkhheSelect::control(const std::string &value) {
 }
 
 
-void DaikinEkhheComponent::send_uart_command(const std::string &parameter, int value) {
-  /*
+void DaikinEkhheComponent::send_uart_cc_command(uint8_t index, uint8_t value) {
     if (last_cc_packet_.empty()) {
-        ESP_LOGW("daikin_ekhhe", "No CC packet received yet. Cannot send command.");
+        ESP_LOGW(TAG, "No CC packet received yet. Cannot send command.");
         return;
     }
 
-    ESP_LOGI("daikin_ekhhe", "Updating CC packet for %s -> %d", parameter.c_str(), value);
+    // Construct command packet
+    std::vector<uint8_t> command = last_cc_packet_;
+    command[0] = 0xCD;
 
-    // ✅ Update the relevant field in the CC packet
-    update_cc_packet(parameter, value);
+    // Ensure the index is valid
+    if (index < command.size() - 1) {
+      command[index] = value;
+      ESP_LOGI(TAG, "Updated CC packet at index %d -> %u", index, value);
+    } else {
+        ESP_LOGW(TAG, "Invalid parameter index: %d", index);
+        return;
+    }
 
-    // ✅ Update timestamp in the CC packet
-    time_t now = time(nullptr);
-    struct tm *timeinfo = gmtime(&now);
-    last_cc_packet_[CC_HOUR_INDEX] = static_cast<uint8_t>(timeinfo->tm_hour);
-    last_cc_packet_[CC_MINUTE_INDEX] = static_cast<uint8_t>(timeinfo->tm_min);
+    command.back() = ekhhe_checksum(command);
 
-    // ✅ Recalculate checksum
-    last_cc_packet_.back() = calculate_checksum(last_cc_packet_);
-
-    // ✅ Send the updated CC packet
-    this->write_array(last_cc_packet_);
+    // Send the updated packet over UART
+    this->write_array(command);
     this->flush();
-
-    ESP_LOGI("daikin_ekhhe", "CC packet sent.");
-    */
+    ESP_LOGI(TAG, "Sent modified CC packet via UART.");
 }
 
 
