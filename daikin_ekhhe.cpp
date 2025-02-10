@@ -39,6 +39,11 @@ void DaikinEkhheComponent::setup() {
 }
 
 void DaikinEkhheComponent::loop() {
+
+    if (processing_updates_) {
+      return;
+    }
+
     // only enable UART every PROCESS_INTERVAL_MS
     unsigned long now = millis();
     if (!uart_active_) {
@@ -48,115 +53,75 @@ void DaikinEkhheComponent::loop() {
         return;
     }
 
-
-  while (this->available()) {
-    uint8_t byte = this->read();
-
-    if (!receiving_) {
-      // Check if this byte is a valid packet start byte
-      if (PACKET_SIZES.find(byte) != PACKET_SIZES.end()) {
-        ESP_LOGI(TAG, "Detected packet start byte: 0x%X", byte);
-        buffer_.clear();
-        buffer_.push_back(byte);
-        expected_length_ = PACKET_SIZES.at(byte);
-        receiving_ = true;
-      }
-    } else {
-      // Receiving a packet
-      buffer_.push_back(byte);
-
-      if (buffer_.size() >= expected_length_) {
-        // Packet fully received
-        receiving_ = false;
-        process_uart_buffer();
-      }
+    while (this->available()) {
+      uint8_t byte = this->read();
+      store_latest_packet(byte);
     }
-  }
+
+    // Check if all packets have been stored and process them
+    if (packet_set_complete()) {
+      process_packet_set();
+    }
+}
+
+void DaikinEkhheComponent::store_latest_packet(uint8_t byte) {
+  // Wait for a start byte
+  if (PACKET_SIZES.find(byte) == PACKET_SIZES.end()) return;
+
+  // Read the expected packet size
+  uint8_t expected_length = PACKET_SIZES.at(byte);
+  std::vector<uint8_t> packet(expected_length);
+  packet[0] = byte;
+
+  // Read the rest of the packet
+  this->read_array(packet.data() + 1, expected_length - 1);
+
+  // Store only the latest version of each packet
+  latest_packets_[byte] = packet;
+
+  ESP_LOGI(TAG, "Stored latest packet type: 0x%X", byte);
+}
+
+bool DaikinEkhheComponent::packet_set_complete() {
+    return latest_packets_.count(DD_PACKET_START_BYTE) &&
+           latest_packets_.count(D2_PACKET_START_BYTE) &&
+           latest_packets_.count(D4_PACKET_START_BYTE) &&
+           latest_packets_.count(C1_PACKET_START_BYTE) &&
+           latest_packets_.count(CC_PACKET_START_BYTE);
 }
 
 void DaikinEkhheComponent::start_uart_cycle() {
     ESP_LOGI(TAG, "Starting UART read cycle...");
     uart_active_ = true;
-    last_process_time_ = millis();
+    latest_packets_.clear();
 }
 
-DaikinEkhheComponent::EkhheError DaikinEkhheComponent::process_uart_buffer() {
 
-  // Checksum check
-  if (buffer_.empty()) {
-    return EKHHE_ERROR_BUFFER_EMPTY;
-  }
-
-  uint8_t checksum = ekhhe_checksum(buffer_);
-
-  if (checksum != buffer_.back()) {
-    return EKHHE_ERROR_CHECKSUM;
-  }
-
-  // Extract packet type
-  uint8_t packet_type = buffer_[0];
-
-  switch (packet_type) {
-    case DD_PACKET_START_BYTE:
-      last_dd_packet_ = buffer_;
-      break;
-    case D2_PACKET_START_BYTE:
-      last_d2_packet_ = buffer_;
-      break;
-    case D4_PACKET_START_BYTE:
-      last_d4_packet_ = buffer_;
-      break;
-    case C1_PACKET_START_BYTE:
-      last_c1_packet_ =  buffer_;
-      break;
-    case CC_PACKET_START_BYTE:
-      last_cc_packet_ = buffer_;
-      break;
-  }
-
-  ESP_LOGV(TAG, "Stored packet type: 0x%X", packet_type);
-
-  if (!last_d2_packet_.empty() && !last_dd_packet_.empty() && !last_cc_packet_.empty() &&
-      !last_c1_packet_.empty() && !last_d4_packet_.empty()) {
-      
-      process_packet_set();
-      uart_active_ = false;  // Disable UART reading until next cycle
-  }
-
-  return EKHHE_ERROR_NONE;
-}
 
 void DaikinEkhheComponent::process_packet_set() {
-  /* 
-  if (!last_d2_packet_.empty()) {
-        ESP_LOGD(TAG, "Processing D2 Packet");
-        parse_d2_packet(last_d2_packet_);
-  }
-  */
-  if (!last_dd_packet_.empty()) {
-        ESP_LOGD(TAG, "Processing DD Packet");
-        parse_dd_packet(last_dd_packet_);
-  }
-  if (!last_cc_packet_.empty()) {
-        ESP_LOGD(TAG, "Processing CC Packet");
-        parse_cc_packet(last_cc_packet_);
-  }
-  /* 
-  if (!last_c1_packet_.empty()) {
-        ESP_LOGD(TAG, "Processing C1 Packet");
-        parse_c1_packet(last_c1_packet_);
-  }
-  if (!last_d4_packet_.empty()) {
-        ESP_LOGD(TAG, "Processing D4 Packet");
-        parse_d4_packet(last_d4_packet_);
-  }
-  */
+  ESP_LOGI(TAG, "Processing latest set of packets...");
+  processing_updates_ = true;
 
-  // Clear stored packets after processing (except for cc)
-  last_d2_packet_.clear();
-  last_dd_packet_.clear();
-  last_c1_packet_.clear();
-  last_d4_packet_.clear();
+  // Assign stored packets to last known packet values
+  last_dd_packet_ = latest_packets_[DD_PACKET_START_BYTE];
+  last_d2_packet_ = latest_packets_[D2_PACKET_START_BYTE];
+  last_d4_packet_ = latest_packets_[D4_PACKET_START_BYTE];
+  last_c1_packet_ = latest_packets_[C1_PACKET_START_BYTE];
+  last_cc_packet_ = latest_packets_[CC_PACKET_START_BYTE];
+
+  //defer([this, last_dd_packet_]() {parse_dd_packet(last_dd_packet_); });
+  parse_dd_packet(last_dd_packet_);
+  //parse_d2_packet();
+  //parse_d4_packet();
+  //parse_c1_packet();
+  //defer([this, last_cc_packet_]() {parse_cc_packet(last_cc_packet_); });
+  parse_cc_packet(last_cc_packet_);
+
+  // Reset UART cycle
+  processing_updates_ = false;
+  uart_active_ = false;
+  last_process_time_ = millis();
+  ESP_LOGI(TAG, "UART cycle completed. Waiting for next update interval...");
 }
 
 void DaikinEkhheComponent::print_buffer() {
@@ -205,7 +170,7 @@ void DaikinEkhheComponent::parse_dd_packet(std::vector<uint8_t> buffer) {
     DaikinEkhheComponent::set_binary_sensor_value(entry.first, entry.second);
   }
 
-  print_buffer();
+  //print_buffer();
   return;
 }
 
@@ -293,17 +258,17 @@ void DaikinEkhheComponent::parse_d2_packet(std::vector<uint8_t> buffer) {
 
   update_timestamp(buffer[D2_PACKET_HOUR_IDX], buffer[D2_PACKET_MIN_IDX]);
 
-  print_buffer();
+  //print_buffer();
   return;
 }
 
 void DaikinEkhheComponent::parse_d4_packet(std::vector<uint8_t> buffer) {
-  print_buffer();
+  //print_buffer();
   return;
 }
 
 void DaikinEkhheComponent::parse_c1_packet(std::vector<uint8_t> buffer) {
-  print_buffer();
+  //print_buffer();
   return;
 }
 
@@ -392,7 +357,7 @@ void DaikinEkhheComponent::parse_cc_packet(std::vector<uint8_t> buffer) {
 
   update_timestamp(buffer[CC_PACKET_HOUR_IDX], buffer[CC_PACKET_MIN_IDX]);
 
-  print_buffer();
+  //print_buffer();
   return;
 }
 
@@ -433,23 +398,29 @@ void DaikinEkhheComponent::register_timestamp_sensor(text_sensor::TextSensor *se
 
 void DaikinEkhheComponent::set_sensor_value(const std::string &sensor_name, float value) {
   if (sensors_.find(sensor_name) != sensors_.end()) {
-    sensors_[sensor_name]->publish_state(value);
+    defer([this, sensor_name, value]() {
+      sensors_[sensor_name]->publish_state(value);
+    });
   }
+
 }
 
 
 void DaikinEkhheComponent::set_binary_sensor_value(const std::string &sensor_name, bool value) {
   if (binary_sensors_.find(sensor_name) != binary_sensors_.end()) {
-    binary_sensors_[sensor_name]->publish_state(value);
+    defer([this, sensor_name, value]() {
+      binary_sensors_[sensor_name]->publish_state(value);
+    });
   }
 }
-
 
 void DaikinEkhheComponent::set_number_value(const std::string &number_name, float value) {
   // This sets a number value that's been gotten from the UART stream, not something that's 
   // set through the API or UI
   if (numbers_.find(number_name) != numbers_.end()) {
-    numbers_[number_name]->publish_state(value);
+    defer([this, number_name, value]() {
+        numbers_[number_name]->publish_state(value);
+    });
   }
 }
 
@@ -463,7 +434,9 @@ void DaikinEkhheComponent::set_select_value(const std::string &select_name, int 
         for (const auto &entry : select->get_select_mappings()) {
             if (entry.second == value) {                
                 // Update ESPHome with the new selected value
-                select->publish_state(entry.first);
+                defer([this, select, entry]() {
+                  select->publish_state(entry.first);
+                });
                 return;
             }
         }
@@ -596,6 +569,9 @@ void DaikinEkhheComponent::send_uart_cc_command(uint8_t index, uint8_t value) {
     this->write_array(command);
     this->flush();
     ESP_LOGI(TAG, "Sent modified CC packet via UART.");
+
+    // Trigger a new read cycle
+    start_uart_cycle();
 }
 
 

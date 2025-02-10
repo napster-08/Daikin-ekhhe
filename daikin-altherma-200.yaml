@@ -70,7 +70,7 @@ uart:
 # Initialize the daikin UART receiver
 daikin_ekhhe:
   - id: daikin_component
-    update_interval: 30
+    update_interval: 10
 
 sensor:
   - platform: daikin_ekhhe

@@ -272,17 +272,21 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
   void print_buffer();
   void start_uart_cycle();
   void process_packet_set();
+  bool packet_set_complete();
+  void store_latest_packet(uint8_t byte);
+
   std::vector<uint8_t> buffer_;  // Stores incoming UART bytes
   std::vector<uint8_t> last_d2_packet_;
   std::vector<uint8_t> last_dd_packet_;
   std::vector<uint8_t> last_cc_packet_;  // Always store CC for sending commands
   std::vector<uint8_t> last_c1_packet_;
   std::vector<uint8_t> last_d4_packet_;
+  std::map<uint8_t, std::vector<uint8_t>> latest_packets_;
 
   uint8_t expected_length_ = 0;  // Expected packet length
   bool receiving_ = false;       // If we're currently receiving a packet
-  DaikinEkhheComponent::EkhheError process_uart_buffer(); 
   bool uart_active_ = false;
+  bool processing_updates_ = false;
 
   // Cycle management
   unsigned long last_process_time_ = 0;
