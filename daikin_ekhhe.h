@@ -287,6 +287,8 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
   bool receiving_ = false;       // If we're currently receiving a packet
   bool uart_active_ = false;
   bool processing_updates_ = false;
+  bool uart_tx_active_ = false; // used from SW "flow control" to avoid RS485 bus contention
+  unsigned long last_rx_time_ = 0;
 
   // Cycle management
   unsigned long last_process_time_ = 0;

@@ -40,7 +40,9 @@ void DaikinEkhheComponent::setup() {
 
 void DaikinEkhheComponent::loop() {
 
-    if (processing_updates_) {
+    // Don't process RX if we're processing sensor updates
+    // or if UART TX is active
+    if (processing_updates_ || uart_tx_active_) {
       return;
     }
 
@@ -65,6 +67,8 @@ void DaikinEkhheComponent::loop() {
 }
 
 void DaikinEkhheComponent::store_latest_packet(uint8_t byte) {
+  last_rx_time_ = millis();
+
   // Wait for a start byte
   if (PACKET_SIZES.find(byte) == PACKET_SIZES.end()) return;
 
@@ -124,22 +128,6 @@ void DaikinEkhheComponent::process_packet_set() {
   ESP_LOGI(TAG, "UART cycle completed. Waiting for next update interval...");
 }
 
-void DaikinEkhheComponent::print_buffer() {
-  std::string hex_output;
-  for (size_t i = 0; i < buffer_.size(); i++) {
-    char hex_byte[6];  // Enough space for "0xXX "
-    snprintf(hex_byte, sizeof(hex_byte), "0x%02X ", buffer_[i]);
-    hex_output += hex_byte;
-
-    // Print in groups of 8 for readability
-    if ((i + 1) % 8 == 0) {
-      hex_output += "\n";
-    }
-  }
-
-  ESP_LOGV("daikin_ekhhe", "Buffer Contents:\n%s", hex_output.c_str());
-}
-
 void DaikinEkhheComponent::parse_dd_packet(std::vector<uint8_t> buffer) {
 
   // update sensors
@@ -170,7 +158,6 @@ void DaikinEkhheComponent::parse_dd_packet(std::vector<uint8_t> buffer) {
     DaikinEkhheComponent::set_binary_sensor_value(entry.first, entry.second);
   }
 
-  //print_buffer();
   return;
 }
 
@@ -258,17 +245,14 @@ void DaikinEkhheComponent::parse_d2_packet(std::vector<uint8_t> buffer) {
 
   update_timestamp(buffer[D2_PACKET_HOUR_IDX], buffer[D2_PACKET_MIN_IDX]);
 
-  //print_buffer();
   return;
 }
 
 void DaikinEkhheComponent::parse_d4_packet(std::vector<uint8_t> buffer) {
-  //print_buffer();
   return;
 }
 
 void DaikinEkhheComponent::parse_c1_packet(std::vector<uint8_t> buffer) {
-  //print_buffer();
   return;
 }
 
@@ -357,7 +341,6 @@ void DaikinEkhheComponent::parse_cc_packet(std::vector<uint8_t> buffer) {
 
   update_timestamp(buffer[CC_PACKET_HOUR_IDX], buffer[CC_PACKET_MIN_IDX]);
 
-  //print_buffer();
   return;
 }
 
@@ -545,10 +528,28 @@ void DaikinEkhheSelect::control(const std::string &value) {
 
 
 void DaikinEkhheComponent::send_uart_cc_command(uint8_t index, uint8_t value) {
+    // Check that a CC packet is stored
+    // since we need the last one as a basis for the new packet
     if (last_cc_packet_.empty()) {
         ESP_LOGW(TAG, "No CC packet received yet. Cannot send command.");
         return;
     }
+
+    // Wait for RX to be idle before sending TX and if not, retry
+    unsigned long now = millis();
+    unsigned long time_since_last_rx = now - last_rx_time_;
+
+    if (time_since_last_rx < 50) {  // If RX is active, wait 50ms until it's idle
+        ESP_LOGI(TAG, "RX is still active, deferring TX...");
+        set_timeout(50 - time_since_last_rx, [this, index, value]() {
+            send_uart_cc_command(index, value);  // Retry after a short delay
+        });
+        return;
+    }
+
+    // UART flow control
+    uart_active_ = false;
+    uart_tx_active_ = true;  
 
     // Construct command packet
     std::vector<uint8_t> command = last_cc_packet_;
@@ -559,8 +560,8 @@ void DaikinEkhheComponent::send_uart_cc_command(uint8_t index, uint8_t value) {
       command[index] = value;
       ESP_LOGI(TAG, "Updated CC packet at index %d -> %u", index, value);
     } else {
-        ESP_LOGW(TAG, "Invalid parameter index: %d", index);
-        return;
+      ESP_LOGW(TAG, "Invalid parameter index: %d", index);
+      return;
     }
 
     command.back() = ekhhe_checksum(command);
@@ -570,8 +571,11 @@ void DaikinEkhheComponent::send_uart_cc_command(uint8_t index, uint8_t value) {
     this->flush();
     ESP_LOGI(TAG, "Sent modified CC packet via UART.");
 
-    // Trigger a new read cycle
-    start_uart_cycle();
+    // Trigger a new read cycle w/ small t imeout
+    set_timeout(10, [this]() {
+          uart_tx_active_ = false;
+          start_uart_cycle();
+    });
 }
 
 
