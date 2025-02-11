@@ -36,4 +36,4 @@ Some main TODOs to get to full functionality are:
 * Inspect the UART protocol and implement some softare flow control so when we TX we are not talking over the incoming RX (need to do some logic analyzer measurements of the protocol timings for this)
 * Split up the UART processing loop to running over mulitple esphome loops, such that the component does not block too long
 * Implement an immediate UART read after setting a variable so we can verify if the variable has been updated properly
-  
+* Work out the control function for Selects
