@@ -93,7 +93,7 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
   void update_timestamp(uint8_t hour, uint8_t minute);
 
   // Allow UART command sending for Number/Select control
-  void send_uart_cc_command(uint8_t index, uint8_t value);
+  void send_uart_cc_command(uint8_t index, uint8_t value, uint8_t bit_position);
 
 
   enum EkkheDDPacket {
@@ -269,7 +269,6 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
   void parse_d4_packet(std::vector<uint8_t> buffer);
   void parse_c1_packet(std::vector<uint8_t> buffer);
   void parse_cc_packet(std::vector<uint8_t> buffer);
-  void print_buffer();
   void start_uart_cycle();
   void process_packet_set();
   bool packet_set_complete();
@@ -283,8 +282,6 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
   std::vector<uint8_t> last_d4_packet_;
   std::map<uint8_t, std::vector<uint8_t>> latest_packets_;
 
-  uint8_t expected_length_ = 0;  // Expected packet length
-  bool receiving_ = false;       // If we're currently receiving a packet
   bool uart_active_ = false;
   bool processing_updates_ = false;
   bool uart_tx_active_ = false; // used from SW "flow control" to avoid RS485 bus contention
@@ -296,11 +293,81 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
 };
 
 using namespace daikin_ekhhe;
-static const std::map<std::string, uint8_t> NUMBER_PARAM_INDEX = {
-   {P1_LOW_WAT_PROBE_HYST,   DaikinEkhheComponent::CC_PACKET_P1_IDX},
-   {P2_HEAT_ON_DELAY,        DaikinEkhheComponent::CC_PACKET_P2_IDX},
-   {P3_ANTL_SET_T,           DaikinEkhheComponent::CC_PACKET_P3_IDX},
+// uint8_t variables
+static const std::map<std::string, uint8_t> U_NUMBER_PARAM_INDEX = {
+  {P1_LOW_WAT_PROBE_HYST,   DaikinEkhheComponent::CC_PACKET_P1_IDX},
+  {P2_HEAT_ON_DELAY,        DaikinEkhheComponent::CC_PACKET_P2_IDX},
+  {P3_ANTL_SET_T,           DaikinEkhheComponent::CC_PACKET_P3_IDX},
+  {P4_ANTL_DURATION,        DaikinEkhheComponent::CC_PACKET_P4_IDX},
+  {P7_DEFROST_CYCLE_DELAY,  DaikinEkhheComponent::CC_PACKET_P7_IDX},
+  {P9_DEFR_STOP_THRES,      DaikinEkhheComponent::CC_PACKET_P9_IDX},
+  {P10_DEFR_MAX_DURATION,   DaikinEkhheComponent::CC_PACKET_P10_IDX},
+  {P17_HP_START_DELAY_DIG1, DaikinEkhheComponent::CC_PACKET_P17_IDX},
+  {P18_LOW_WAT_T_DIG1,      DaikinEkhheComponent::CC_PACKET_P18_IDX},
+  {P19_LOW_WAT_T_HYST,      DaikinEkhheComponent::CC_PACKET_P19_IDX},
+  {P20_SOL_DRAIN_THRES,     DaikinEkhheComponent::CC_PACKET_P20_IDX},
+  {P21_LOW_WAT_T_HP_STOP,   DaikinEkhheComponent::CC_PACKET_P21_IDX},
+  {P22_UP_WAT_T_EH_STOP,    DaikinEkhheComponent::CC_PACKET_P22_IDX},
+  {P29_ANTL_START_HR,       DaikinEkhheComponent::CC_PACKET_P29_IDX},
+  {P30_UP_WAT_T_EH_HYST,    DaikinEkhheComponent::CC_PACKET_P30_IDX},
+  {P31_HP_PERIOD_AUTO,      DaikinEkhheComponent::CC_PACKET_P31_IDX},
+  {P32_EH_AUTO_TRES,        DaikinEkhheComponent::CC_PACKET_P32_IDX},
+  {P34_EEV_SH_PERIOD,       DaikinEkhheComponent::CC_PACKET_P34_IDX},
+  {P36_EEV_DSH_SETPOINT,    DaikinEkhheComponent::CC_PACKET_P36_IDX},
+  {P37_EEV_STEP_DEFR,       DaikinEkhheComponent::CC_PACKET_P37_IDX},      
+  {P38_EEV_MIN_STEP_AUTO,   DaikinEkhheComponent::CC_PACKET_P38_IDX},
+  {P40_EEV_INIT_STEP,       DaikinEkhheComponent::CC_PACKET_P40_IDX},
+  {P47_MAX_INLET_T_HP,      DaikinEkhheComponent::CC_PACKET_P47_IDX},
+  {P49_EVA_INLET_THRES,     DaikinEkhheComponent::CC_PACKET_P49_IDX},
+  {P50_ANTIFREEZE_SET,      DaikinEkhheComponent::CC_PACKET_P50_IDX},
+  {P51_EVA_HIGH_SET,        DaikinEkhheComponent::CC_PACKET_P51_IDX},
+  {P52_EVA_LOW_SET,         DaikinEkhheComponent::CC_PACKET_P52_IDX},
+  {ECO_T_TEMPERATURE,       DaikinEkhheComponent::CC_PACKET_ECO_TTARGET_IDX},
+  {AUTO_T_TEMPERATURE,      DaikinEkhheComponent::CC_PACKET_AUTO_TTARGET_IDX},
+  {BOOST_T_TEMPERATURE,     DaikinEkhheComponent::CC_PACKET_BOOST_TTGARGET_IDX},
+  {ELECTRIC_T_TEMPERATURE,  DaikinEkhheComponent::CC_PACKET_ELECTRIC_TTARGET_IDX},
 };
+
+// int8_t variables
+static const std::map<std::string, uint8_t> I_NUMBER_PARAM_INDEX = {
+  {P8_DEFR_START_THRES,       DaikinEkhheComponent::CC_PACKET_P8_IDX}, // int8_t
+  {P25_UP_WAT_T_OFFSET,       DaikinEkhheComponent::CC_PACKET_P25_IDX},
+  {P26_LOW_WAT_T_OFFSET,      DaikinEkhheComponent::CC_PACKET_P26_IDX},
+  {P27_INLET_T_OFFSET,        DaikinEkhheComponent::CC_PACKET_P27_IDX},
+  {P28_DEFR_T_OFFSET,         DaikinEkhheComponent::CC_PACKET_P28_IDX},
+  {P35_EEV_SH_SETPOINT,       DaikinEkhheComponent::CC_PACKET_P35_IDX},
+  {P41_AKP1_THRES,            DaikinEkhheComponent::CC_PACKET_P41_IDX},
+  {P42_AKP2_THRES,            DaikinEkhheComponent::CC_PACKET_P42_IDX},
+  {P43_AKP3_THRES,            DaikinEkhheComponent::CC_PACKET_P43_IDX},
+  {P44_EEV_KP1_GAIN,          DaikinEkhheComponent::CC_PACKET_P44_IDX},
+  {P45_EEV_KP2_GAIN,          DaikinEkhheComponent::CC_PACKET_P45_IDX},
+  {P46_EEV_KP3_GAIN,          DaikinEkhheComponent::CC_PACKET_P46_IDX},
+  {P48_MIN_INLET_T_HP,        DaikinEkhheComponent::CC_PACKET_P48_IDX},
+};
+
+static const std::map<std::string, uint8_t> SELECT_PARAM_INDEX = {
+  {OPERATIONAL_MODE,     DaikinEkhheComponent::CC_PACKET_MODE_IDX},
+  {P12_EXT_PUMP_MODE,    DaikinEkhheComponent::CC_PACKET_P12_IDX},
+  {P14_EVA_BLOWER_TYPE,  DaikinEkhheComponent::CC_PACKET_P14_IDX},
+  {P16_SOLAR_MODE_INT,   DaikinEkhheComponent::CC_PACKET_P16_IDX},
+  {P23_PV_MODE_INT,      DaikinEkhheComponent::CC_PACKET_P23_IDX},
+  {P24_OFF_PEAK_MODE,    DaikinEkhheComponent::CC_PACKET_P24_IDX}, 
+};
+
+
+static const std::map<std::string, uint8_t> SELECT_BITMASKS = {
+  {POWER_STATUS,          0},
+  {P39_EEV_MODE,          2},
+  {P13_HW_CIRC_PUMP_MODE, 4},
+  {P11_DISP_WAT_T_PROBE,  0},
+  {P15_SAFETY_SW_TYPE,    1},
+  {P5_DEFROST_MODE,       2},
+  {P6_EHEATER_DEFROSTING, 3},
+  {P33_EEV_CONTROL,       4},
+};
+
+static const uint8_t BIT_POSITION_NO_BITMASK = 255;
+
 
 }  // namespace daikin_ekkhe
 }  // namespace esphome

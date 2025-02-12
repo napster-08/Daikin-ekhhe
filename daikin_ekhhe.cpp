@@ -495,39 +495,80 @@ void DaikinEkhheComponent::set_update_interval(int interval_ms) {
 void DaikinEkhheNumber::control(float value) {
 
     if (this->parent_ == nullptr) {
-        ESP_LOGW(TAG, "Parent component is null, cannot send command.");
+        ESP_LOGW(TAG, "Parent component is null, cannot send Number command.");
         return;
     }
 
     // Use get_name() to determine which UART command to send
     auto name = this->internal_id_;
-    ESP_LOGI(TAG, "Changing number value: %s -> %.2f", this->internal_id_.c_str(), value);
+    ESP_LOGI(TAG, "Changing number value: %s -> %.2f", name.c_str(), value);
 
-    // Get the CC array index from 
-    auto it = NUMBER_PARAM_INDEX.find(name);
-    if (it != NUMBER_PARAM_INDEX.end()) {
-        uint8_t index = it->second;
-        this->parent_->send_uart_cc_command(index, (uint8_t)value);
+    // Get the CC array index from map, send UART command and update UI state
+    auto it_u = U_NUMBER_PARAM_INDEX.find(name);
+    auto it_i = I_NUMBER_PARAM_INDEX.find(name);
+    if (it_u != U_NUMBER_PARAM_INDEX.end()) {
+        uint8_t index = it_u->second;
+        this->parent_->send_uart_cc_command(index, (uint8_t)value, BIT_POSITION_NO_BITMASK);
         this->publish_state(value);
-    } else {
+    } 
+    else if (it_i != I_NUMBER_PARAM_INDEX.end()) {
+        uint8_t index = it_i->second;
+        this->parent_->send_uart_cc_command(index, (int8_t)value, BIT_POSITION_NO_BITMASK);
+        this->publish_state(value);
+    }
+    else {
         ESP_LOGW(TAG, "No matching UART command for Number: %s", name.c_str());
     }
-
 }
 
 // !! STUB function - this needs to be worked out
 void DaikinEkhheSelect::control(const std::string &value) {
-    ESP_LOGI(TAG, "Select control called: %s", value.c_str());
+    if (this->parent_ == nullptr) {
+        ESP_LOGW(TAG, "Parent component is null, cannot send Select.");
+        return;
+    }
+
+    // Use get_name() to determine which UART command to send
+    auto name = this->internal_id_;
+    ESP_LOGI(TAG, "Changing Select value: %s -> %.2f", name.c_str(), value);
+
+    // Find the correct value index from the mapping
+    auto mappings = this->get_select_mappings();
+    if (mappings.empty()) {
+        ESP_LOGW(TAG, "No select mappings found for %s!", name.c_str());
+        return;
+    }
+
+    auto it = mappings.find(value);
+    if (it == mappings.end()) {
+        ESP_LOGW(TAG, "Invalid select option %s for entity %s!", value.c_str(), name.c_str());
+        return;
+    }
+    uint8_t uart_value = static_cast<uint8_t>(it->second);
+    ESP_LOGI(TAG, "Mapped select value: %s -> UART Value: %d", value.c_str(), uart_value);
+  
+    // Look up the CC packet index for this select entity
+    auto index_it = SELECT_PARAM_INDEX.find(name);
+    if (index_it == SELECT_PARAM_INDEX.end()) {
+        ESP_LOGW(TAG, "No matching UART command for Select: %s", name.c_str());
+        return;
+    }
+    uint8_t param_index = index_it->second;
+
+    // Send UART packet depending if it's a bitmask or not
+    uint8_t bit_position = BIT_POSITION_NO_BITMASK;  // Default to invalid bit position
+    auto bitmask_it = SELECT_BITMASKS.find(name);
+    if (bitmask_it != SELECT_BITMASKS.end()) {
+        bit_position = bitmask_it->second;  
+    }
 
     // Update value in ESPHome
+    this->parent_->send_uart_cc_command(param_index, uart_value, bit_position);
     this->publish_state(value);
-
-    // Send selection over UART
-    // send_uart_command(value);  // Uncomment if needed
 }
 
 
-void DaikinEkhheComponent::send_uart_cc_command(uint8_t index, uint8_t value) {
+void DaikinEkhheComponent::send_uart_cc_command(uint8_t index, uint8_t value, uint8_t bit_position) {
     // Check that a CC packet is stored
     // since we need the last one as a basis for the new packet
     if (last_cc_packet_.empty()) {
@@ -541,8 +582,8 @@ void DaikinEkhheComponent::send_uart_cc_command(uint8_t index, uint8_t value) {
 
     if (time_since_last_rx < 50) {  // If RX is active, wait 50ms until it's idle
         ESP_LOGI(TAG, "RX is still active, deferring TX...");
-        set_timeout(50 - time_since_last_rx, [this, index, value]() {
-            send_uart_cc_command(index, value);  // Retry after a short delay
+        set_timeout(50 - time_since_last_rx, [this, index, value, bit_position]() {
+            send_uart_cc_command(index, value, bit_position);  // Retry after a short delay
         });
         return;
     }
@@ -553,15 +594,19 @@ void DaikinEkhheComponent::send_uart_cc_command(uint8_t index, uint8_t value) {
 
     // Construct command packet
     std::vector<uint8_t> command = last_cc_packet_;
-    command[0] = 0xCD;
+    command[0] = CD_PACKET_START_BYTE;
 
-    // Ensure the index is valid
-    if (index < command.size() - 1) {
-      command[index] = value;
-      ESP_LOGI(TAG, "Updated CC packet at index %d -> %u", index, value);
+    // Reconstruct array byte depending on bitmask or not
+    if (bit_position != BIT_POSITION_NO_BITMASK) {  
+      uint8_t current_value = command[index];
+
+      // Clear the specific bit and set to selected value
+      current_value &= ~(1 << bit_position);
+      current_value |= (value << bit_position);
+      command[index] = current_value;
     } else {
-      ESP_LOGW(TAG, "Invalid parameter index: %d", index);
-      return;
+      // If it's a normal parameter, just assign the value
+      command[index] = value;
     }
 
     command.back() = ekhhe_checksum(command);
