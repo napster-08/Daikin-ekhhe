@@ -58,17 +58,11 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
   DaikinEkhheComponent() = default;
   enum EkhheError {
     EKHHE_ERROR_NONE,
-
-    // from library
     EKHHE_ERROR_PACKET_SIZE, 
     EKHHE_ERROR_BUFFER_EMPTY,
     EKHHE_ERROR_CHECKSUM,
-    EKHHE_ERROR_PACKET_END_CODE_MISSMATCH,
   };
 
-  struct EkhheReading {
-    uint16_t low_water_temp_probe;
-  };
 
   // ========== INTERNAL METHODS ==========
   void setup() override;
@@ -263,7 +257,6 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
 
   // UART Processing
   uint8_t ekhhe_checksum(const std::vector<uint8_t>& data_bytes);
-
   void parse_dd_packet(std::vector<uint8_t> buffer);
   void parse_d2_packet(std::vector<uint8_t> buffer);
   void parse_d4_packet(std::vector<uint8_t> buffer);
@@ -274,7 +267,6 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
   bool packet_set_complete();
   void store_latest_packet(uint8_t byte);
 
-  std::vector<uint8_t> buffer_;  // Stores incoming UART bytes
   std::vector<uint8_t> last_d2_packet_;
   std::vector<uint8_t> last_dd_packet_;
   std::vector<uint8_t> last_cc_packet_;  // Always store CC for sending commands
@@ -284,7 +276,7 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
 
   bool uart_active_ = false;
   bool processing_updates_ = false;
-  bool uart_tx_active_ = false; // used from SW "flow control" to avoid RS485 bus contention
+  bool uart_tx_active_ = false; // used for SW "flow control" to avoid RS485 bus contention
   unsigned long last_rx_time_ = 0;
 
   // Cycle management

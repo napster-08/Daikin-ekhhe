@@ -39,9 +39,7 @@ void DaikinEkhheComponent::setup() {
 }
 
 void DaikinEkhheComponent::loop() {
-
-    // Don't process RX if we're processing sensor updates
-    // or if UART TX is active
+    // Don't process RX if we're processing sensor updates or if UART TX is active
     if (processing_updates_ || uart_tx_active_) {
       return;
     }
@@ -55,6 +53,7 @@ void DaikinEkhheComponent::loop() {
         return;
     }
 
+    // Receive bytes
     while (this->available()) {
       uint8_t byte = this->read();
       store_latest_packet(byte);
@@ -100,8 +99,6 @@ void DaikinEkhheComponent::start_uart_cycle() {
     latest_packets_.clear();
 }
 
-
-
 void DaikinEkhheComponent::process_packet_set() {
   ESP_LOGI(TAG, "Processing latest set of packets...");
   processing_updates_ = true;
@@ -113,12 +110,10 @@ void DaikinEkhheComponent::process_packet_set() {
   last_c1_packet_ = latest_packets_[C1_PACKET_START_BYTE];
   last_cc_packet_ = latest_packets_[CC_PACKET_START_BYTE];
 
-  //defer([this, last_dd_packet_]() {parse_dd_packet(last_dd_packet_); });
   parse_dd_packet(last_dd_packet_);
-  //parse_d2_packet();
-  //parse_d4_packet();
-  //parse_c1_packet();
-  //defer([this, last_cc_packet_]() {parse_cc_packet(last_cc_packet_); });
+  //parse_d2_packet(last_d2_packet);  // Don't process D2 since all info is in CC as well
+  parse_d4_packet(last_d4_packet_);
+  parse_c1_packet(last_c1_packet_);
   parse_cc_packet(last_cc_packet_);
 
   // Reset UART cycle
@@ -129,7 +124,6 @@ void DaikinEkhheComponent::process_packet_set() {
 }
 
 void DaikinEkhheComponent::parse_dd_packet(std::vector<uint8_t> buffer) {
-
   // update sensors
   std::map<std::string, float> sensor_values = {
       {A_LOW_WAT_T_PROBE,      (int8_t)buffer[DD_PACKET_A_IDX]},
@@ -249,10 +243,12 @@ void DaikinEkhheComponent::parse_d2_packet(std::vector<uint8_t> buffer) {
 }
 
 void DaikinEkhheComponent::parse_d4_packet(std::vector<uint8_t> buffer) {
+  // STUB function only
   return;
 }
 
 void DaikinEkhheComponent::parse_c1_packet(std::vector<uint8_t> buffer) {
+  // STUB function only
   return;
 }
 
@@ -388,7 +384,6 @@ void DaikinEkhheComponent::set_sensor_value(const std::string &sensor_name, floa
 
 }
 
-
 void DaikinEkhheComponent::set_binary_sensor_value(const std::string &sensor_name, bool value) {
   if (binary_sensors_.find(sensor_name) != binary_sensors_.end()) {
     defer([this, sensor_name, value]() {
@@ -455,7 +450,6 @@ void DaikinEkhheComponent::update_timestamp(uint8_t hour, uint8_t minute) {
         ESP_LOGV("daikin_ekhhe", "Updated timestamp (UTC): %s", timestamp);
     }
 }
-
 
 uint8_t DaikinEkhheComponent::ekhhe_checksum(const std::vector<uint8_t>& data_bytes) {
   // Compute the checksum as (sum of data bytes) mod 256 + 170
@@ -604,7 +598,8 @@ void DaikinEkhheComponent::send_uart_cc_command(uint8_t index, uint8_t value, ui
       current_value &= ~(1 << bit_position);
       current_value |= (value << bit_position);
       command[index] = current_value;
-    } else {
+    } 
+    else {
       // If it's a normal parameter, just assign the value
       command[index] = value;
     }
