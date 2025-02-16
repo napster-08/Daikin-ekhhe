@@ -26,14 +26,9 @@ If all goes well, you should get something like this in the UI (there are a lot 
 You will need the esp32 UART hooked up to a UART/RS485 converter, connected to A/B/GND in CN23. This will need to be spliced in somehow as the display needs to remain connected. You can tap 5V for an esp32 board from CN21 or CN22. Some information also [here](https://github.com/lorbetzki/Daikin-EKHHE) by lorbetzki. 
 
 ## Reverse Engineering
-A lot of the protocol reverse engineering has been done by lorbetzki [here](https://github.com/lorbetzki/Daikin-EKHHE)
+A lot of the protocol reverse engineering has been done by lorbetzki [here](https://github.com/lorbetzki/Daikin-EKHHE).
 
 ## TODO
 Some main TODOs to get to full functionality are:
 
-* Enable setting of all Numbers and Selects (right now only three are enabled as a prototype)
-* This also means we need to pass through the variable type since some are int8_t and some are uint8_t
-* Inspect the UART protocol and implement some softare flow control so when we TX we are not talking over the incoming RX (need to do some logic analyzer measurements of the protocol timings for this)
-* Split up the UART processing loop to running over mulitple esphome loops, such that the component does not block too long
-* Implement an immediate UART read after setting a variable so we can verify if the variable has been updated properly
-* Work out the control function for Selects
+* Implement better UART flow control and match the Daikin protocol as indicate by lorbetzki [here](https://github.com/lorbetzki/Daikin-EKHHE/discussions/2#discussioncomment-12176862).  
