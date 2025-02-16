@@ -1,10 +1,12 @@
+
 #pragma once
 
 #include <string>
 #include <map>
+#include <type_traits>
+
 #include "esphome/core/component.h"
 #include "esphome/components/sensor/sensor.h"
-#include "daikin_ekhhe_const.h"
 #include "esphome/components/binary_sensor/binary_sensor.h"
 #include "esphome/components/number/number.h"
 #include "esphome/components/select/select.h"
@@ -12,6 +14,7 @@
 #include "esphome/components/uart/uart.h"
 #include "esphome/components/time/real_time_clock.h"
 
+#include "daikin_ekhhe_const.h"
 
 namespace esphome {
 namespace daikin_ekkhe {
@@ -26,7 +29,6 @@ class DaikinEkhheNumber : public number::Number {
     // Needed so we can set this from python and then reference it in the control function
     void set_internal_id(const std::string &id) { this->internal_id_ = id; }
 
-
   private:
     DaikinEkhheComponent *parent_;
     std::string internal_id_;
@@ -38,15 +40,17 @@ class DaikinEkhheSelect : public select::Select, public Component {
   void set_select_mappings(std::map<std::string, int> mappings) {
     this->select_mappings_ = std::move(mappings);
   }
+  // this stores the number to read/write for each select option
   std::map<std::string, int> get_select_mappings() {
       return this->select_mappings_;
   }
   void set_parent(DaikinEkhheComponent *parent) { this->parent_ = parent; }
-
+  void set_internal_id(const std::string &id) { this->internal_id_ = id; }
 
   private:
-   std::map<std::string, int> select_mappings_; // this stores the number to read/write for each select option
+   std::map<std::string, int> select_mappings_; 
    DaikinEkhheComponent *parent_;
+   std::string internal_id_;
 };
 
 class DaikinEkhheComponent : public Component, public uart::UARTDevice {
@@ -55,18 +59,11 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
   DaikinEkhheComponent() = default;
   enum EkhheError {
     EKHHE_ERROR_NONE,
-
-    // from library
     EKHHE_ERROR_PACKET_SIZE, 
     EKHHE_ERROR_BUFFER_EMPTY,
     EKHHE_ERROR_CHECKSUM,
-    EKHHE_ERROR_PACKET_END_CODE_MISSMATCH,
   };
 
-  struct EkhheReading {
-    uint16_t low_water_temp_probe;
-  };
-  // Nothing really public.
 
   // ========== INTERNAL METHODS ==========
   void setup() override;
@@ -89,6 +86,10 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
   void set_number_value(const std::string &number_name, float value);
   void set_select_value(const std::string &select_name, int value);
   void update_timestamp(uint8_t hour, uint8_t minute);
+
+  // Allow UART command sending for Number/Select control
+  void send_uart_cc_command(uint8_t index, uint8_t value, uint8_t bit_position);
+
 
   enum EkkheDDPacket {
     DD_PACKET_START_IDX = 0,
@@ -246,8 +247,6 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
     CD_PACKET_SIZE      = 71,
   };
 
-
-
  private:
   // variables for sensors etc.
   std::map<std::string, esphome::sensor::Sensor *> sensors_;
@@ -259,32 +258,109 @@ class DaikinEkhheComponent : public Component, public uart::UARTDevice {
 
   // UART Processing
   uint8_t ekhhe_checksum(const std::vector<uint8_t>& data_bytes);
-
   void parse_dd_packet(std::vector<uint8_t> buffer);
   void parse_d2_packet(std::vector<uint8_t> buffer);
   void parse_d4_packet(std::vector<uint8_t> buffer);
   void parse_c1_packet(std::vector<uint8_t> buffer);
   void parse_cc_packet(std::vector<uint8_t> buffer);
-  void print_buffer();
   void start_uart_cycle();
   void process_packet_set();
-  std::vector<uint8_t> buffer_;  // Stores incoming UART bytes
+  bool packet_set_complete();
+  void store_latest_packet(uint8_t byte);
+
   std::vector<uint8_t> last_d2_packet_;
   std::vector<uint8_t> last_dd_packet_;
   std::vector<uint8_t> last_cc_packet_;  // Always store CC for sending commands
   std::vector<uint8_t> last_c1_packet_;
   std::vector<uint8_t> last_d4_packet_;
+  std::map<uint8_t, std::vector<uint8_t>> latest_packets_;
 
-  uint8_t expected_length_ = 0;  // Expected packet length
-  bool receiving_ = false;       // If we're currently receiving a packet
-  DaikinEkhheComponent::EkhheError process_uart_buffer(); 
-  void send_uart_command(const std::string &parameter, int value);
   bool uart_active_ = false;
+  bool processing_updates_ = false;
+  bool uart_tx_active_ = false; // used for SW "flow control" to avoid RS485 bus contention
+  unsigned long last_rx_time_ = 0;
 
   // Cycle management
   unsigned long last_process_time_ = 0;
-   unsigned long update_interval_ = 10000;
+  unsigned long update_interval_ = 10000;
 };
+
+using namespace daikin_ekhhe;
+// uint8_t variables
+static const std::map<std::string, uint8_t> U_NUMBER_PARAM_INDEX = {
+  {P1_LOW_WAT_PROBE_HYST,   DaikinEkhheComponent::CC_PACKET_P1_IDX},
+  {P2_HEAT_ON_DELAY,        DaikinEkhheComponent::CC_PACKET_P2_IDX},
+  {P3_ANTL_SET_T,           DaikinEkhheComponent::CC_PACKET_P3_IDX},
+  {P4_ANTL_DURATION,        DaikinEkhheComponent::CC_PACKET_P4_IDX},
+  {P7_DEFROST_CYCLE_DELAY,  DaikinEkhheComponent::CC_PACKET_P7_IDX},
+  {P9_DEFR_STOP_THRES,      DaikinEkhheComponent::CC_PACKET_P9_IDX},
+  {P10_DEFR_MAX_DURATION,   DaikinEkhheComponent::CC_PACKET_P10_IDX},
+  {P17_HP_START_DELAY_DIG1, DaikinEkhheComponent::CC_PACKET_P17_IDX},
+  {P18_LOW_WAT_T_DIG1,      DaikinEkhheComponent::CC_PACKET_P18_IDX},
+  {P19_LOW_WAT_T_HYST,      DaikinEkhheComponent::CC_PACKET_P19_IDX},
+  {P20_SOL_DRAIN_THRES,     DaikinEkhheComponent::CC_PACKET_P20_IDX},
+  {P21_LOW_WAT_T_HP_STOP,   DaikinEkhheComponent::CC_PACKET_P21_IDX},
+  {P22_UP_WAT_T_EH_STOP,    DaikinEkhheComponent::CC_PACKET_P22_IDX},
+  {P29_ANTL_START_HR,       DaikinEkhheComponent::CC_PACKET_P29_IDX},
+  {P30_UP_WAT_T_EH_HYST,    DaikinEkhheComponent::CC_PACKET_P30_IDX},
+  {P31_HP_PERIOD_AUTO,      DaikinEkhheComponent::CC_PACKET_P31_IDX},
+  {P32_EH_AUTO_TRES,        DaikinEkhheComponent::CC_PACKET_P32_IDX},
+  {P34_EEV_SH_PERIOD,       DaikinEkhheComponent::CC_PACKET_P34_IDX},
+  {P36_EEV_DSH_SETPOINT,    DaikinEkhheComponent::CC_PACKET_P36_IDX},
+  {P37_EEV_STEP_DEFR,       DaikinEkhheComponent::CC_PACKET_P37_IDX},      
+  {P38_EEV_MIN_STEP_AUTO,   DaikinEkhheComponent::CC_PACKET_P38_IDX},
+  {P40_EEV_INIT_STEP,       DaikinEkhheComponent::CC_PACKET_P40_IDX},
+  {P47_MAX_INLET_T_HP,      DaikinEkhheComponent::CC_PACKET_P47_IDX},
+  {P49_EVA_INLET_THRES,     DaikinEkhheComponent::CC_PACKET_P49_IDX},
+  {P50_ANTIFREEZE_SET,      DaikinEkhheComponent::CC_PACKET_P50_IDX},
+  {P51_EVA_HIGH_SET,        DaikinEkhheComponent::CC_PACKET_P51_IDX},
+  {P52_EVA_LOW_SET,         DaikinEkhheComponent::CC_PACKET_P52_IDX},
+  {ECO_T_TEMPERATURE,       DaikinEkhheComponent::CC_PACKET_ECO_TTARGET_IDX},
+  {AUTO_T_TEMPERATURE,      DaikinEkhheComponent::CC_PACKET_AUTO_TTARGET_IDX},
+  {BOOST_T_TEMPERATURE,     DaikinEkhheComponent::CC_PACKET_BOOST_TTGARGET_IDX},
+  {ELECTRIC_T_TEMPERATURE,  DaikinEkhheComponent::CC_PACKET_ELECTRIC_TTARGET_IDX},
+};
+
+// int8_t variables
+static const std::map<std::string, uint8_t> I_NUMBER_PARAM_INDEX = {
+  {P8_DEFR_START_THRES,       DaikinEkhheComponent::CC_PACKET_P8_IDX}, // int8_t
+  {P25_UP_WAT_T_OFFSET,       DaikinEkhheComponent::CC_PACKET_P25_IDX},
+  {P26_LOW_WAT_T_OFFSET,      DaikinEkhheComponent::CC_PACKET_P26_IDX},
+  {P27_INLET_T_OFFSET,        DaikinEkhheComponent::CC_PACKET_P27_IDX},
+  {P28_DEFR_T_OFFSET,         DaikinEkhheComponent::CC_PACKET_P28_IDX},
+  {P35_EEV_SH_SETPOINT,       DaikinEkhheComponent::CC_PACKET_P35_IDX},
+  {P41_AKP1_THRES,            DaikinEkhheComponent::CC_PACKET_P41_IDX},
+  {P42_AKP2_THRES,            DaikinEkhheComponent::CC_PACKET_P42_IDX},
+  {P43_AKP3_THRES,            DaikinEkhheComponent::CC_PACKET_P43_IDX},
+  {P44_EEV_KP1_GAIN,          DaikinEkhheComponent::CC_PACKET_P44_IDX},
+  {P45_EEV_KP2_GAIN,          DaikinEkhheComponent::CC_PACKET_P45_IDX},
+  {P46_EEV_KP3_GAIN,          DaikinEkhheComponent::CC_PACKET_P46_IDX},
+  {P48_MIN_INLET_T_HP,        DaikinEkhheComponent::CC_PACKET_P48_IDX},
+};
+
+static const std::map<std::string, uint8_t> SELECT_PARAM_INDEX = {
+  {OPERATIONAL_MODE,     DaikinEkhheComponent::CC_PACKET_MODE_IDX},
+  {P12_EXT_PUMP_MODE,    DaikinEkhheComponent::CC_PACKET_P12_IDX},
+  {P14_EVA_BLOWER_TYPE,  DaikinEkhheComponent::CC_PACKET_P14_IDX},
+  {P16_SOLAR_MODE_INT,   DaikinEkhheComponent::CC_PACKET_P16_IDX},
+  {P23_PV_MODE_INT,      DaikinEkhheComponent::CC_PACKET_P23_IDX},
+  {P24_OFF_PEAK_MODE,    DaikinEkhheComponent::CC_PACKET_P24_IDX}, 
+};
+
+static const std::map<std::string, std::pair<uint8_t, uint8_t>> SELECT_BITMASKS = {
+  {POWER_STATUS,          {DaikinEkhheComponent::CC_PACKET_MASK1_IDX, 0}}, 
+  {P39_EEV_MODE,          {DaikinEkhheComponent::CC_PACKET_MASK1_IDX, 2}},
+  {P13_HW_CIRC_PUMP_MODE, {DaikinEkhheComponent::CC_PACKET_MASK1_IDX, 4}},
+  {P11_DISP_WAT_T_PROBE,  {DaikinEkhheComponent::CC_PACKET_MASK2_IDX, 0}},
+  {P15_SAFETY_SW_TYPE,    {DaikinEkhheComponent::CC_PACKET_MASK2_IDX, 1}},
+  {P5_DEFROST_MODE,       {DaikinEkhheComponent::CC_PACKET_MASK2_IDX, 2}},
+  {P6_EHEATER_DEFROSTING, {DaikinEkhheComponent::CC_PACKET_MASK2_IDX, 3}},
+  {P33_EEV_CONTROL,       {DaikinEkhheComponent::CC_PACKET_MASK2_IDX, 4}},
+};
+
+static const uint8_t BIT_POSITION_NO_BITMASK = 255;
+static const uint8_t PARAM_INDEX_INVALID = 255;
+
 
 }  // namespace daikin_ekkhe
 }  // namespace esphome

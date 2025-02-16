@@ -44,8 +44,14 @@ external_components:
     # This is needed to access a customized version of the samsung IR protocol
   - source:
       type: local
-      path: <LOCAL PATH TO COMPONENT FOLDER>
+      path: C:\Users\jeroe\Documents\git\esphome\esphome\components
     components: [daikin_ekhhe]
+
+
+
+button:
+  - platform: restart
+    name: "Daikin restart"
 
 
 uart:
@@ -55,8 +61,8 @@ uart:
   parity: NONE
   stop_bits: 1
   id: my_uart
-  #debug:
-  #  direction: BOTH
+  debug:
+    direction: TX
   #  dummy_receiver: yes
   #  after:
   #    timeout: 50ms
@@ -64,6 +70,7 @@ uart:
 # Initialize the daikin UART receiver
 daikin_ekhhe:
   - id: daikin_component
+    update_interval: 10
 
 sensor:
   - platform: daikin_ekhhe

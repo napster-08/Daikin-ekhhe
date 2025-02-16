@@ -139,6 +139,7 @@ async def setup_conf(config, key, hub):
         #cg.add(sens.set_select_mappings(options_map))
         cg.add(getattr(hub, f"register_select")(key, sens))
         cg.add(sens.set_parent(hub))
+        cg.add(sens.set_internal_id(key))
 
 
 
