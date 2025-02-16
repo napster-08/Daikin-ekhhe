@@ -254,85 +254,36 @@ void DaikinEkhheComponent::parse_c1_packet(std::vector<uint8_t> buffer) {
 
 void DaikinEkhheComponent::parse_cc_packet(std::vector<uint8_t> buffer) {
 
-    // update numbers
-  std::map<std::string, float> number_values = {
-      {P1_LOW_WAT_PROBE_HYST,     buffer[CC_PACKET_P1_IDX]},
-      {P2_HEAT_ON_DELAY,          buffer[CC_PACKET_P2_IDX]},
-      {P3_ANTL_SET_T,             buffer[CC_PACKET_P3_IDX]},
-      {P4_ANTL_DURATION,          buffer[CC_PACKET_P4_IDX]},
-      {P7_DEFROST_CYCLE_DELAY,    buffer[CC_PACKET_P7_IDX]},
-      {P8_DEFR_START_THRES,       (int8_t)buffer[CC_PACKET_P8_IDX]},
-      {P9_DEFR_STOP_THRES,        buffer[CC_PACKET_P9_IDX]},
-      {P10_DEFR_MAX_DURATION,     buffer[CC_PACKET_P10_IDX]},
-      {P17_HP_START_DELAY_DIG1,   buffer[CC_PACKET_P17_IDX]},
-      {P18_LOW_WAT_T_DIG1,        buffer[CC_PACKET_P18_IDX]},
-      {P19_LOW_WAT_T_HYST,        buffer[CC_PACKET_P19_IDX]},
-      {P20_SOL_DRAIN_THRES,       buffer[CC_PACKET_P20_IDX]},
-      {P21_LOW_WAT_T_HP_STOP,     buffer[CC_PACKET_P21_IDX]},
-      {P22_UP_WAT_T_EH_STOP,      buffer[CC_PACKET_P22_IDX]},
-      {P25_UP_WAT_T_OFFSET,       (int8_t)buffer[CC_PACKET_P25_IDX]},
-      {P26_LOW_WAT_T_OFFSET,      (int8_t)buffer[CC_PACKET_P26_IDX]},
-      {P27_INLET_T_OFFSET,        (int8_t)buffer[CC_PACKET_P27_IDX]},
-      {P28_DEFR_T_OFFSET,         (int8_t)buffer[CC_PACKET_P28_IDX]},
-      {P29_ANTL_START_HR,         buffer[CC_PACKET_P29_IDX]},
-      {P30_UP_WAT_T_EH_HYST,      buffer[CC_PACKET_P30_IDX]},
-      {P31_HP_PERIOD_AUTO,        buffer[CC_PACKET_P31_IDX]},
-      {P32_EH_AUTO_TRES,          buffer[CC_PACKET_P32_IDX]},
-      {P34_EEV_SH_PERIOD,         buffer[CC_PACKET_P34_IDX]},
-      {P35_EEV_SH_SETPOINT,       (int8_t)buffer[CC_PACKET_P35_IDX]},
-      {P36_EEV_DSH_SETPOINT,      buffer[CC_PACKET_P36_IDX]},
-      {P37_EEV_STEP_DEFR,         buffer[CC_PACKET_P37_IDX]},      
-      {P38_EEV_MIN_STEP_AUTO,     buffer[CC_PACKET_P38_IDX]},
-      {P40_EEV_INIT_STEP,         buffer[CC_PACKET_P40_IDX]},
-      {P41_AKP1_THRES,            (int8_t)buffer[CC_PACKET_P41_IDX]},
-      {P42_AKP2_THRES,            (int8_t)buffer[CC_PACKET_P42_IDX]},
-      {P43_AKP3_THRES,            (int8_t)buffer[CC_PACKET_P43_IDX]},
-      {P44_EEV_KP1_GAIN,          (int8_t)buffer[CC_PACKET_P44_IDX]},
-      {P45_EEV_KP2_GAIN,          (int8_t)buffer[CC_PACKET_P45_IDX]},
-      {P46_EEV_KP3_GAIN,          (int8_t)buffer[CC_PACKET_P46_IDX]},
-      {P47_MAX_INLET_T_HP,        buffer[CC_PACKET_P47_IDX]},
-      {P48_MIN_INLET_T_HP,        (int8_t)buffer[CC_PACKET_P48_IDX]},
-      {P49_EVA_INLET_THRES,       buffer[CC_PACKET_P49_IDX]},
-      {P50_ANTIFREEZE_SET,        buffer[CC_PACKET_P50_IDX]},
-      {P51_EVA_HIGH_SET,          buffer[CC_PACKET_P51_IDX]},
-      {P52_EVA_LOW_SET,           buffer[CC_PACKET_P52_IDX]},
-      // TODO: Add P54
-
-      {ECO_T_TEMPERATURE,         buffer[CC_PACKET_ECO_TTARGET_IDX]},
-      {AUTO_T_TEMPERATURE,        buffer[CC_PACKET_AUTO_TTARGET_IDX]},
-      {BOOST_T_TEMPERATURE,       buffer[CC_PACKET_BOOST_TTGARGET_IDX]},
-      {ELECTRIC_T_TEMPERATURE,    buffer[CC_PACKET_ELECTRIC_TTARGET_IDX]},
-  };
-
-
-  for (const auto &entry : number_values) {
-    set_number_value(entry.first, entry.second);
+  // update numbers, unsigned and signed separately
+  for (const auto &entry : U_NUMBER_PARAM_INDEX) {
+    const std::string &param_name = entry.first;
+    uint8_t param_index = entry.second;
+    uint8_t value = buffer[param_index];
+    set_number_value(param_name, value);
   }
 
-  // update selects
-  std::map<std::string, float> select_values = {
-      // Some variables are bitmasks - clean these up later by parameterizing
-      // Mask 1
-      {POWER_STATUS,           buffer[CC_PACKET_MASK1_IDX] & 0x01},
-      {P39_EEV_MODE,          (buffer[CC_PACKET_MASK1_IDX] & 0x04) >> 2},
-      {P13_HW_CIRC_PUMP_MODE, (buffer[CC_PACKET_MASK1_IDX] & 0x10) >> 4},
-      // Mask 2
-      {P11_DISP_WAT_T_PROBE,   buffer[CC_PACKET_MASK2_IDX] & 0x01},
-      {P15_SAFETY_SW_TYPE,    (buffer[CC_PACKET_MASK2_IDX] & 0x02) >> 1},
-      {P5_DEFROST_MODE,       (buffer[CC_PACKET_MASK2_IDX] & 0x04) >> 2},
-      {P6_EHEATER_DEFROSTING, (buffer[CC_PACKET_MASK2_IDX] & 0x08) >> 3},
-      {P33_EEV_CONTROL,       (buffer[CC_PACKET_MASK2_IDX] & 0x10) >> 4},
-      // The rest
-      {OPERATIONAL_MODE,       buffer[CC_PACKET_MODE_IDX]},
-      {P12_EXT_PUMP_MODE,      buffer[CC_PACKET_P12_IDX]},
-      {P14_EVA_BLOWER_TYPE,    buffer[CC_PACKET_P14_IDX]},
-      {P16_SOLAR_MODE_INT,     buffer[CC_PACKET_P16_IDX]},
-      {P23_PV_MODE_INT,        buffer[CC_PACKET_P23_IDX]},
-      {P24_OFF_PEAK_MODE,      buffer[CC_PACKET_P24_IDX]},
-  };
+  for (const auto &entry : I_NUMBER_PARAM_INDEX) {
+    const std::string &param_name = entry.first;
+    uint8_t param_index = entry.second;
+    int8_t value = static_cast<int8_t>(buffer[param_index]);  // cast as signed
+    set_number_value(param_name, value);
+  }
 
-  for (const auto &entry : select_values) {
-    set_select_value(entry.first, entry.second);
+  // Process Standard Selects (Full-Byte Values)
+  for (const auto &entry : SELECT_PARAM_INDEX) {
+    const std::string &param_name = entry.first;
+    uint8_t param_index = entry.second;
+    uint8_t value = buffer[param_index];
+    set_select_value(param_name, value);
+  }
+
+  // Process Bitmask-Based Selects (Modify Only One Bit)
+  for (const auto &entry : SELECT_BITMASKS) {
+    const std::string &param_name = entry.first;
+    uint8_t param_index = entry.second.first;  // The byte index
+    uint8_t bit_position = entry.second.second;  // The specific bit to extract
+    uint8_t bit_value = (buffer[param_index] >> bit_position) & 0x01;  // Extract the bit
+    set_select_value(param_name, bit_value);
   }
 
   update_timestamp(buffer[CC_PACKET_HOUR_IDX], buffer[CC_PACKET_MIN_IDX]);
@@ -515,7 +466,6 @@ void DaikinEkhheNumber::control(float value) {
     }
 }
 
-// !! STUB function - this needs to be worked out
 void DaikinEkhheSelect::control(const std::string &value) {
     if (this->parent_ == nullptr) {
         ESP_LOGW(TAG, "Parent component is null, cannot send Select.");
@@ -543,24 +493,29 @@ void DaikinEkhheSelect::control(const std::string &value) {
   
     // Look up the CC packet index for this select entity
     auto index_it = SELECT_PARAM_INDEX.find(name);
-    if (index_it == SELECT_PARAM_INDEX.end()) {
-        ESP_LOGW(TAG, "No matching UART command for Select: %s", name.c_str());
-        return;
+    uint8_t param_index = PARAM_INDEX_INVALID;
+    if (index_it != SELECT_PARAM_INDEX.end()) {
+      param_index = index_it->second;
+      ESP_LOGI(TAG, "Found Select %s in SELECT_PARAM_INDEX -> Index: %d", name.c_str(), param_index);
+    } else {
+      ESP_LOGW(TAG, "Select %s NOT found in SELECT_PARAM_INDEX", name.c_str());
     }
-    uint8_t param_index = index_it->second;
 
-    // Send UART packet depending if it's a bitmask or not
-    uint8_t bit_position = BIT_POSITION_NO_BITMASK;  // Default to invalid bit position
+    // Look up if this select is part of a bitmask
+    uint8_t bit_position = BIT_POSITION_NO_BITMASK;  // Default to no bitmask
     auto bitmask_it = SELECT_BITMASKS.find(name);
     if (bitmask_it != SELECT_BITMASKS.end()) {
-        bit_position = bitmask_it->second;  
+        param_index = bitmask_it->second.first;  // Get the byte index
+        bit_position = bitmask_it->second.second;  // Get the bit position
+        ESP_LOGI(TAG, "Found Select %s in SELECT_BITMASKS -> Byte Index: %d, Bit Position: %d", name.c_str(), param_index, bit_position);
+    } else {
+            ESP_LOGW(TAG, "Select %s NOT found in SELECT_BITMASKS", name.c_str());
     }
 
     // Update value in ESPHome
     this->parent_->send_uart_cc_command(param_index, uart_value, bit_position);
     this->publish_state(value);
 }
-
 
 void DaikinEkhheComponent::send_uart_cc_command(uint8_t index, uint8_t value, uint8_t bit_position) {
     // Check that a CC packet is stored
@@ -570,6 +525,7 @@ void DaikinEkhheComponent::send_uart_cc_command(uint8_t index, uint8_t value, ui
         return;
     }
 
+    /*
     // Wait for RX to be idle before sending TX and if not, retry
     unsigned long now = millis();
     unsigned long time_since_last_rx = now - last_rx_time_;
@@ -581,6 +537,7 @@ void DaikinEkhheComponent::send_uart_cc_command(uint8_t index, uint8_t value, ui
         });
         return;
     }
+    */
 
     // UART flow control
     uart_active_ = false;

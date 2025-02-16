@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include <string>
@@ -346,19 +347,19 @@ static const std::map<std::string, uint8_t> SELECT_PARAM_INDEX = {
   {P24_OFF_PEAK_MODE,    DaikinEkhheComponent::CC_PACKET_P24_IDX}, 
 };
 
-
-static const std::map<std::string, uint8_t> SELECT_BITMASKS = {
-  {POWER_STATUS,          0},
-  {P39_EEV_MODE,          2},
-  {P13_HW_CIRC_PUMP_MODE, 4},
-  {P11_DISP_WAT_T_PROBE,  0},
-  {P15_SAFETY_SW_TYPE,    1},
-  {P5_DEFROST_MODE,       2},
-  {P6_EHEATER_DEFROSTING, 3},
-  {P33_EEV_CONTROL,       4},
+static const std::map<std::string, std::pair<uint8_t, uint8_t>> SELECT_BITMASKS = {
+  {POWER_STATUS,          {DaikinEkhheComponent::CC_PACKET_MASK1_IDX, 0}}, 
+  {P39_EEV_MODE,          {DaikinEkhheComponent::CC_PACKET_MASK1_IDX, 2}},
+  {P13_HW_CIRC_PUMP_MODE, {DaikinEkhheComponent::CC_PACKET_MASK1_IDX, 4}},
+  {P11_DISP_WAT_T_PROBE,  {DaikinEkhheComponent::CC_PACKET_MASK2_IDX, 0}},
+  {P15_SAFETY_SW_TYPE,    {DaikinEkhheComponent::CC_PACKET_MASK2_IDX, 1}},
+  {P5_DEFROST_MODE,       {DaikinEkhheComponent::CC_PACKET_MASK2_IDX, 2}},
+  {P6_EHEATER_DEFROSTING, {DaikinEkhheComponent::CC_PACKET_MASK2_IDX, 3}},
+  {P33_EEV_CONTROL,       {DaikinEkhheComponent::CC_PACKET_MASK2_IDX, 4}},
 };
 
 static const uint8_t BIT_POSITION_NO_BITMASK = 255;
+static const uint8_t PARAM_INDEX_INVALID = 255;
 
 
 }  // namespace daikin_ekkhe
