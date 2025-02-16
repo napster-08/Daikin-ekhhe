@@ -1,7 +1,7 @@
 esphome:
   name: daikin-altherma-200
   friendly_name: daikin-altherma-200
-
+  
 esp32:
   board: esp32-c3-devkitm-1
   framework:
@@ -38,21 +38,18 @@ captive_portal:
 
 web_server:
   port: 80
+  version: 3
 
 external_components:
-    # use necessary components from a local folder
-    # This is needed to access a customized version of the samsung IR protocol
   - source:
-      type: local
-      path: C:\Users\jeroe\Documents\git\esphome\esphome\components
-    components: [daikin_ekhhe]
-
-
+      type: git
+      url: https://github.com/jcappaert/esphome-daikin-ekhhe
+      ref: main
+    components: [ daikin_ekhhe ]
 
 button:
   - platform: restart
     name: "Daikin restart"
-
 
 uart:
   rx_pin: GPIO20
@@ -63,9 +60,6 @@ uart:
   id: my_uart
   debug:
     direction: TX
-  #  dummy_receiver: yes
-  #  after:
-  #    timeout: 50ms
 
 # Initialize the daikin UART receiver
 daikin_ekhhe:
