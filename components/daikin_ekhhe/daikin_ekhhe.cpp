@@ -149,7 +149,7 @@ void DaikinEkhheComponent::parse_dd_packet(std::vector<uint8_t> buffer) {
   };
 
   for (const auto &entry : binary_sensor_values) {
-    DaikinEkhheComponent::set_binary_sensor_value(entry.first, entry.second);
+    set_binary_sensor_value(entry.first, entry.second);
   }
 
   return;
@@ -339,6 +339,7 @@ void DaikinEkhheComponent::set_binary_sensor_value(const std::string &sensor_nam
   if (binary_sensors_.find(sensor_name) != binary_sensors_.end()) {
     defer([this, sensor_name, value]() {
       binary_sensors_[sensor_name]->publish_state(value);
+      ESP_LOGI(TAG, "Setting binary sensor %s to %i", sensor_name.c_str(), value);
     });
   }
 }
@@ -415,9 +416,36 @@ void DaikinEkhheComponent::dump_config() {
     ESP_LOGCONFIG(TAG, "Enabled Sensors:");
     for (const auto &entry : sensors_) {
         if (entry.second != nullptr) {
-            ESP_LOGCONFIG(TAG, "  - %s: Last value: %.2f", entry.first.c_str(), entry.second->get_state());
+            ESP_LOGCONFIG(TAG, "  - %s", entry.first.c_str());
         }
     }
+
+    ESP_LOGCONFIG(TAG, "Enabled Binary Sensors:");
+    // binary sensors
+    for (const auto &entry : binary_sensors_) {
+        if (entry.second != nullptr) {
+              ESP_LOGCONFIG(TAG, "  - %s", entry.first.c_str());
+        }
+    }
+
+    // numbers
+    ESP_LOGCONFIG(TAG, "Enabled Numbers:");
+    // binary sensors
+    for (const auto &entry : numbers_) {
+        if (entry.second != nullptr) {
+              ESP_LOGCONFIG(TAG, "  - %s", entry.first.c_str());
+        }
+    }
+
+    // selects
+       // numbers
+       ESP_LOGCONFIG(TAG, "Enabled Selects:");
+       // binary sensors
+       for (const auto &entry : selects_) {
+           if (entry.second != nullptr) {
+                 ESP_LOGCONFIG(TAG, "  - %s", entry.first.c_str());
+           }
+       }
 
     // needs to be 9600/N/1
     this->check_uart_settings(9600, 1, esphome::uart::UART_CONFIG_PARITY_NONE, 8);
