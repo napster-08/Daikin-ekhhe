@@ -118,8 +118,8 @@ CONFIG_SCHEMA = (
             }), 
             cv.Optional(P4_ANTL_DURATION): number.NUMBER_SCHEMA.extend({
                 cv.GenerateID(): cv.declare_id(DaikinEkhheNumber),
-                cv.Optional(CONF_MAX_VALUE, default=75): cv.float_,
-                cv.Optional(CONF_MIN_VALUE, default=50): cv.float_,
+                cv.Optional(CONF_MAX_VALUE, default=90): cv.float_,
+                cv.Optional(CONF_MIN_VALUE, default=0): cv.float_,
                 cv.Optional(CONF_STEP, default=1): cv.positive_float,
                 cv.Optional(CONF_DEVICE_CLASS, default=DEVICE_CLASS_DURATION): cv.string,
                 cv.Optional(CONF_UNIT_OF_MEASUREMENT, default=UNIT_MINUTE): cv.string,
@@ -238,8 +238,8 @@ CONFIG_SCHEMA = (
             }), 
             cv.Optional(P29_ANTL_START_HR): number.NUMBER_SCHEMA.extend({
                 cv.GenerateID(): cv.declare_id(DaikinEkhheNumber),
-                cv.Optional(CONF_MAX_VALUE, default=60): cv.float_,
-                cv.Optional(CONF_MIN_VALUE, default=10): cv.float_,
+                cv.Optional(CONF_MAX_VALUE, default=23): cv.float_,
+                cv.Optional(CONF_MIN_VALUE, default=0): cv.float_,
                 cv.Optional(CONF_STEP, default=1): cv.positive_float,
                 cv.Optional(CONF_DEVICE_CLASS, default=DEVICE_CLASS_TIMESTAMP): cv.string,
                 cv.Optional(CONF_UNIT_OF_MEASUREMENT, default=UNIT_HOUR): cv.string,
