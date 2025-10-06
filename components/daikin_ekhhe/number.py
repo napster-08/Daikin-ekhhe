@@ -108,7 +108,7 @@ CONFIG_SCHEMA = (
                 cv.Optional(CONF_DEVICE_CLASS, default=DEVICE_CLASS_DURATION): cv.string,
                 cv.Optional(CONF_UNIT_OF_MEASUREMENT, default=UNIT_MINUTE): cv.string,
             }),
-            cv.Optional(P3_ANTL_SET_T): number.NUMBER_SCHEMA.extend({
+            cv.Optional(P3_ANTL_SET_T): number.number_schema.extend({
                 cv.GenerateID(): cv.declare_id(DaikinEkhheNumber),
                 cv.Optional(CONF_MAX_VALUE, default=75): cv.float_,
                 cv.Optional(CONF_MIN_VALUE, default=50): cv.float_,
@@ -453,4 +453,5 @@ async def setup_conf(config, key, hub):
 async def to_code(config):
     hub = await cg.get_variable(config[CONF_EKHHE_ID])
     for key in TYPES:
+
         await setup_conf(config, key, hub)
