@@ -11,7 +11,7 @@ CODEOWNERS = ["@jcappaert"]
 
 DEPENDENCIES = ["uart"]
 
-daikin_ekhhe_ns = cg.esphome_ns.namespace("daikin_ekhhe")
+daikin_ekhhe_ns = cg.esphome_ns.namespace("daikin_ekkhe")
 DaikinEkhhe = daikin_ekhhe_ns.class_("DaikinEkhheComponent", cg.Component, uart.UARTDevice)
 MULTI_CONF = True
 
@@ -36,3 +36,4 @@ async def to_code(config):
     update_interval_ms = config[CONF_UPDATE_INTERVAL] * 1000 
 
     cg.add(var.set_update_interval(update_interval_ms))
+
