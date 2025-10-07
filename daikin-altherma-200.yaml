@@ -43,7 +43,7 @@ web_server:
 external_components:
   - source:
       type: git
-      url: https://github.com/jcappaert/esphome-daikin-ekhhe
+      url: https://github.com/napster-08/Daikin-ekhhe/
       ref: main
     components: [ daikin_ekhhe ]
 
