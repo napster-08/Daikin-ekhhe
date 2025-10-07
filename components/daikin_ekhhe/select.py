@@ -71,7 +71,7 @@ CONFIG_SCHEMA = (
             }),
             cv.Optional(P5_DEFROST_MODE): select.select_schema({
                 cv.GenerateID(): cv.declare_id(DaikinEkhheSelect),
-                cv.Optional(CONF_OPTIONS, default={0: 'Compressor-stop', 1: 'Hot-gas'}): ensure_option_map
+                cv.Optional(CONF_OPTIONS, default={0: 'Arrêt du compresseur', 1: 'Gaz chaud'}): ensure_option_map
             }),
             cv.Optional(P6_EHEATER_DEFROSTING): select.select_schema({
                 cv.GenerateID(): cv.declare_id(DaikinEkhheSelect),
@@ -79,15 +79,15 @@ CONFIG_SCHEMA = (
             }),
             cv.Optional(P11_DISP_WAT_T_PROBE): select.select_schema({
                 cv.GenerateID(): cv.declare_id(DaikinEkhheSelect),
-                cv.Optional(CONF_OPTIONS, default={0: 'Lower', 1: 'Upper'}): ensure_option_map
+                cv.Optional(CONF_OPTIONS, default={0: 'Inférieur', 1: 'Supérieur'}): ensure_option_map
             }),
             cv.Optional(P12_EXT_PUMP_MODE): select.select_schema({
                 cv.GenerateID(): cv.declare_id(DaikinEkhheSelect),
-                cv.Optional(CONF_OPTIONS, default={0: 'Always-off', 1: 'Hot water recirculation', 2: 'Thermal Solar System'}): ensure_option_map
+                cv.Optional(CONF_OPTIONS, default={0: 'Toujours off', 1: 'Recirculation Eau Chaude', 2: 'Systeme Solaire Thermique'}): ensure_option_map
             }),
             cv.Optional(P13_HW_CIRC_PUMP_MODE): select.select_schema({
                 cv.GenerateID(): cv.declare_id(DaikinEkhheSelect),
-                cv.Optional(CONF_OPTIONS, default={0: 'With heat pump', 1: 'Always on'}): ensure_option_map
+                cv.Optional(CONF_OPTIONS, default={0: 'Avec pompe à chaleur', 1: 'Toujours on'}): ensure_option_map
             }),
             cv.Optional(P14_EVA_BLOWER_TYPE): select.select_schema({
                 cv.GenerateID(): cv.declare_id(DaikinEkhheSelect),
@@ -99,23 +99,23 @@ CONFIG_SCHEMA = (
             }),
             cv.Optional(P16_SOLAR_MODE_INT): select.select_schema({
                 cv.GenerateID(): cv.declare_id(DaikinEkhheSelect),
-                cv.Optional(CONF_OPTIONS, default={0: 'Permanently deactivated', 1: 'DIG1', 2: 'direct control'}): ensure_option_map
+                cv.Optional(CONF_OPTIONS, default={0: 'Désactivé définitivement', 1: 'DIG1', 2: 'control direct'}): ensure_option_map
             }),
             cv.Optional(P23_PV_MODE_INT): select.select_schema({
                 cv.GenerateID(): cv.declare_id(DaikinEkhheSelect),
-                cv.Optional(CONF_OPTIONS, default={0: 'Permanently deactivated', 1: 'activated'}): ensure_option_map
+                cv.Optional(CONF_OPTIONS, default={0: 'Désactivé définitivement', 1: 'activé'}): ensure_option_map
             }),
             cv.Optional(P24_OFF_PEAK_MODE): select.select_schema({
                 cv.GenerateID(): cv.declare_id(DaikinEkhheSelect),
-                cv.Optional(CONF_OPTIONS, default={0: 'Permanently deactivated', 1: 'activated with eco', 2: 'activated with auto'}): ensure_option_map
+                cv.Optional(CONF_OPTIONS, default={0: 'Désactivé définitivement', 1: 'activé avec éco', 2: 'activé avec auto'}): ensure_option_map
             }),
             cv.Optional(P33_EEV_CONTROL): select.select_schema({
                 cv.GenerateID(): cv.declare_id(DaikinEkhheSelect),
-                cv.Optional(CONF_OPTIONS, default={0: 'Permanently deactivated', 1: 'activated'}): ensure_option_map
+                cv.Optional(CONF_OPTIONS, default={0: 'Désactivé définitivement', 1: 'activé'}): ensure_option_map
             }),
             cv.Optional(P39_EEV_MODE): select.select_schema({
                 cv.GenerateID(): cv.declare_id(DaikinEkhheSelect),
-                cv.Optional(CONF_OPTIONS, default={0: 'automatic', 1: 'manual'}): ensure_option_map
+                cv.Optional(CONF_OPTIONS, default={0: 'Automatique', 1: 'manuel'}): ensure_option_map
             }),
         }
     )
@@ -148,4 +148,5 @@ async def to_code(config):
     for key in TYPES:
 
         await setup_conf(config, key, hub)
+
 
