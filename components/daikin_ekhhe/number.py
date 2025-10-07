@@ -439,7 +439,6 @@ CONFIG_SCHEMA = (
 async def setup_conf(config, key, hub):
     if key in config:
         conf = config[key]
-
         num = await number.new_number(
             conf,
             min_value=conf[CONF_MIN_VALUE],
@@ -453,15 +452,6 @@ async def setup_conf(config, key, hub):
 async def to_code(config):
     hub = await cg.get_variable(config[CONF_EKHHE_ID])
     for key in TYPES:
-
         await setup_conf(config, key, hub)
-
-
-
-
-
-
-
-
 
 
