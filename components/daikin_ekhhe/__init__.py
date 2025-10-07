@@ -7,8 +7,6 @@ from esphome.const import (
 
 CONF_UPDATE_INTERVAL = "update_interval"
 
-CODEOWNERS = ["@jcappaert"]
-
 DEPENDENCIES = ["uart"]
 
 daikin_ekhhe_ns = cg.esphome_ns.namespace("daikin_ekkhe")
@@ -36,4 +34,5 @@ async def to_code(config):
     update_interval_ms = config[CONF_UPDATE_INTERVAL] * 1000 
 
     cg.add(var.set_update_interval(update_interval_ms))
+
 
