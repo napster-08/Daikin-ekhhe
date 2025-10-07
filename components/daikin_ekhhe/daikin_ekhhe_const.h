@@ -92,5 +92,3 @@ static const std::string P52_EVA_LOW_SET         = "evaporator_blower_low_speed_
 
 }  // namespace daikin_ekhhe
 }  // namespace esphome
-
-
