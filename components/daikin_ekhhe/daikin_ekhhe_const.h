@@ -27,10 +27,10 @@ static const std::string POWER_STATUS            = "power_status";
 static const std::string OPERATIONAL_MODE        = "operational_mode";
 static const std::string CURRENT_TIME            = "current_time";
 
-static const std::string AUTO_T_TEMPERATURE      = "auto_temperature_cible";
-static const std::string ECO_T_TEMPERATURE       = "eco_temperature_cible";
-static const std::string BOOST_T_TEMPERATURE     = "boost_temperature_cible";
-static const std::string ELECTRIC_T_TEMPERATURE  = "electric_temperature_cible";
+static const std::string AUTO_T_TEMPERATURE      = "auto_target_temperature";
+static const std::string ECO_T_TEMPERATURE       = "eco_target_temperature";
+static const std::string BOOST_T_TEMPERATURE     = "boost_target_temperature";
+static const std::string ELECTRIC_T_TEMPERATURE  = "electric_target_temperature";
 
 static const std::string P1_LOW_WAT_PROBE_HYST   = "low_water_hp_hysteris";
 static const std::string P2_HEAT_ON_DELAY        = "elec_heater_switch_on_delay";
@@ -92,4 +92,5 @@ static const std::string P52_EVA_LOW_SET         = "evaporator_blower_low_speed_
 
 }  // namespace daikin_ekhhe
 }  // namespace esphome
+
 
