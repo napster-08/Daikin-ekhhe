@@ -391,7 +391,7 @@ CONFIG_SCHEMA = (
                 cv.Optional(CONF_STEP, default=1): cv.positive_float,
                 cv.Optional(CONF_UNIT_OF_MEASUREMENT, default=UNIT_PERCENT): cv.string,
             }), 
-            cv.Optional(P52_EVA_LOW_SET): number.number_schema().extend({
+            cv.Optional(P52_EVA_LOW_SET): number.number_schema({
                 cv.GenerateID(): cv.declare_id(DaikinEkhheNumber),
                 cv.Optional(CONF_MAX_VALUE, default=60): cv.float_,
                 cv.Optional(CONF_MIN_VALUE, default=10): cv.float_,
@@ -455,6 +455,7 @@ async def to_code(config):
     for key in TYPES:
 
         await setup_conf(config, key, hub)
+
 
 
 
