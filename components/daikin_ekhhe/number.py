@@ -429,7 +429,7 @@ CONFIG_SCHEMA = (
                 cv.Optional(CONF_STEP, default=1): cv.positive_float,
                 cv.Optional(CONF_DEVICE_CLASS, default=DEVICE_CLASS_TEMPERATURE): cv.string,
                 cv.Optional(CONF_UNIT_OF_MEASUREMENT, default=UNIT_CELSIUS): cv.string,
-            }),
+            })
         }
 
     )
@@ -452,4 +452,5 @@ async def setup_conf(config, key, hub):
 async def to_code(config):
     hub = await cg.get_variable(config[CONF_EKHHE_ID])
     for key in TYPES:
+
         await setup_conf(config, key, hub)
