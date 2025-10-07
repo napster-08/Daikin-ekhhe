@@ -443,7 +443,7 @@ async def setup_conf(config, key, hub):
         num = await number.new_number(
             conf,
             min_value=conf[CONF_MIN_VALUE],
-            max_value=conf[CONF_MAX_VALUE], 
+            max_value=conf[CONF_MAX_VALUE],
             step=conf[CONF_STEP])
         cg.add(getattr(hub, "register_number")(key, num))
         cg.add(num.set_parent(hub))
@@ -455,6 +455,7 @@ async def to_code(config):
     for key in TYPES:
 
         await setup_conf(config, key, hub)
+
 
 
 
