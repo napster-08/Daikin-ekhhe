@@ -1,4 +1,4 @@
-# Gestion d'un chauffe eau daikin alterma M (EKHHE) a partir d'un ESP32
+# Gestion d'un chauffe eau daikin alterma M (EKHHE) à partir d'un ESP32
 This is an esphome external component for the Daikin EKHHE series of hot water domestic heatpumps, also known as the Altherma M HW. 
 
 The component exposes all of the known sensors and settings to the user. 
