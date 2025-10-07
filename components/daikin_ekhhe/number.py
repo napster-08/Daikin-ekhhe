@@ -439,7 +439,6 @@ CONFIG_SCHEMA = (
 async def setup_conf(config, key, hub):
     if key in config:
         conf = config[key]
-
         num = await number.new_number(
             conf,
             min_value=conf[CONF_MIN_VALUE],
