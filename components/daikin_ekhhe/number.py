@@ -440,6 +440,12 @@ async def setup_conf(config, key, hub):
     if key in config:
         conf = config[key]
 
+
+
+
+
+
+        
         num = await number.new_number(
             conf,
             min_value=conf.get(CONF_MIN_VALUE, 0),            # valeur par défaut selon besoin
@@ -460,6 +466,7 @@ async def to_code(config):
     for key in TYPES:
 
         await setup_conf(config, key, hub)
+
 
 
 
