@@ -67,7 +67,7 @@ CONFIG_SCHEMA = (
             }),
             cv.Optional(OPERATIONAL_MODE): select.select_schema({
                 cv.GenerateID(): cv.declare_id(DaikinEkhheSelect),
-                cv.Optional(CONF_OPTIONS, default={0: 'Auto', 1: 'Eco', 2: 'Boost', 3: 'Electric', 4: 'Fan', 5: 'Vacation'}): ensure_option_map
+                cv.Optional(CONF_OPTIONS, default={0: 'Auto', 1: 'Eco', 2: 'Boost', 3: 'Electrique', 4: 'Ventillation', 5: 'Vacances'}): ensure_option_map
             }),
             cv.Optional(P5_DEFROST_MODE): select.select_schema({
                 cv.GenerateID(): cv.declare_id(DaikinEkhheSelect),
@@ -148,3 +148,4 @@ async def to_code(config):
     for key in TYPES:
 
         await setup_conf(config, key, hub)
+
