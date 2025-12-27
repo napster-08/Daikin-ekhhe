@@ -6,9 +6,9 @@
 #include <type_traits>
 
 #include "esphome/core/component.h"
-#include <../esphome/components/sensor/sensor.h>
-#include <../esphome/components/binary_sensor/binary_sensor.h>
-#include <../esphome/components/number/number.h>
+#include "esphome/components/sensor/sensor.h"
+#include "esphome/components/binary_sensor/binary_sensor.h"
+#include "esphome/components/number/number.h"
 #include "esphome/components/select/select.h"
 #include "esphome/components/text_sensor/text_sensor.h"
 #include "esphome/components/uart/uart.h"
@@ -364,6 +364,7 @@ static const uint8_t PARAM_INDEX_INVALID = 255;
 
 }  // namespace daikin_ekkhe
 }  // namespace esphome
+
 
 
 
