@@ -2,12 +2,12 @@
 # cela devrait correspondre à ce qui est dans daikin_ekhhe_const.h du côté cpp
 A_LOW_WAT_T_PROBE       = "sonde_temp_eau_basse"
 B_UP_WAT_T_PROBE        = "sonde_temp_eau_haute"
-C_DEFROST_T_PROBE       = "sonde_température_de_dégivrage"
-D_SUPPLY_AIR_T_PROBE    = "sonde_temp_air_soufflé"
-E_EVA_INLET_T_PROBE     = "Sonde de température du gaz à l'entrée de l'évaporateur"
-F_EVA_OUTLET_T_PROBE    = "Sonde de température du gaz à la sortie de l'évaporateur"
-G_COMP_GAS_T_PROBE      = "Sonde de température du gaz de refoulement du compresseur"
-H_SOLAR_T_PROBE         = "Sonde de température pour capteur solaire"
+C_DEFROST_T_PROBE       = "sonde_température_de_degivrage"
+D_SUPPLY_AIR_T_PROBE    = "sonde_temp_air_souffle"
+E_EVA_INLET_T_PROBE     = "Sonde de temperature du gaz à l'entree de l'evaporateur"
+F_EVA_OUTLET_T_PROBE    = "Sonde de temperature du gaz à la sortie de l'evaporateur"
+G_COMP_GAS_T_PROBE      = "Sonde de temperature du gaz de refoulement du compresseur"
+H_SOLAR_T_PROBE         = "Sonde de temperature pour capteur solaire"
 I_EEV_STEP              = "Ouverture_etape_EEV"
 J_POWER_FW_VERSION      = "version_du_micrologiciel_carte_alimentation"
 L_UI_FW_VERSION         = "Version du micrologiciel de l'interface utilisateur"
@@ -82,4 +82,5 @@ P50_ANTIFREEZE_SET      = "antifreeze_low_water_temp_setpoint"
 P51_EVA_HIGH_SET        = "Set_ventilateur_évaporateur_haute_vitesse"
 
 P52_EVA_LOW_SET         = "set_ventilateur_évaporateur_basse_vitesse"
+
 
