@@ -434,36 +434,24 @@ CONFIG_SCHEMA = (
 
     )
 )
+
+
+async def setup_conf(config, key, hub):
+    if key in config:
+        conf = config[key]
+        num = await number.new_number(
+            conf,
+            min_value = conf.get(CONF_MIN_VALUE, 0),
+            max_value=conf.get(CONF_MAX_VALUE, 99), 
+            step=conf[CONF_STEP])
+        cg.add(getattr(hub, "register_number")(key, num))
+        cg.add(num.set_parent(hub))
+        cg.add(num.set_internal_id(key))
+
+
 async def to_code(config):
     hub = await cg.get_variable(config[CONF_EKHHE_ID])
     for key in TYPES:
-        if key in config:
-            await setup_conf(config[key], key, hub)
 
-async def setup_conf(conf, key, hub):
-    # ✅ Création schéma + objet C++ correct
-    num = cg.new_Pvariable(
-        DaikinEkhheNumber,
-        key.replace('-', '_'),
-        f"daikin_ekhhe_number_{key}"
-    )
-    
-    # ✅ Appliquer config avec defaults
-    cg.add(num.set_min_value(conf.get(CONF_MIN_VALUE, 0.0)))
-    cg.add(num.set_max_value(conf.get(CONF_MAX_VALUE, 99.0)))
-    cg.add(num.set_step(conf.get(CONF_STEP, 1.0)))
-    
-    if CONF_NAME in conf:
-        cg.add(num.set_name(conf[CONF_NAME]))
-    
-    # ✅ Enregistrement correct
-    cg.add(getattr(hub, "register_number")(key, num))
-    cg.add(num.set_parent(hub))
-
-
-
-
-
-
-
+        await setup_conf(config, key, hub)
 
