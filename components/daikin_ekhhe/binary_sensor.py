@@ -22,17 +22,17 @@ CONFIG_SCHEMA = cv.Schema({
     cv.Optional(DIG1_CONFIG): binary_sensor.binary_sensor_schema(
         entity_category=ENTITY_CATEGORY_DIAGNOSTIC
     ).extend({
-        cv.Optional('inverted', default=False): cv.bool_,  # ✅ Syntaxe CORRECTE
+        cv.Optional('inverted', default=False): cv.boolean,  # ✅ cv.boolean
     }),
     cv.Optional(DIG2_CONFIG): binary_sensor.binary_sensor_schema(
         entity_category=ENTITY_CATEGORY_DIAGNOSTIC
     ).extend({
-        cv.Optional('inverted', default=False): cv.bool_,
+        cv.Optional('inverted', default=False): cv.boolean,  # ✅ cv.boolean
     }),
     cv.Optional(DIG3_CONFIG): binary_sensor.binary_sensor_schema(
         entity_category=ENTITY_CATEGORY_DIAGNOSTIC
     ).extend({
-        cv.Optional('inverted', default=False): cv.bool_,
+        cv.Optional('inverted', default=False): cv.boolean,  # ✅ cv.boolean
     }),
 })
 
@@ -53,6 +53,7 @@ async def to_code(config):
     for key in TYPES:
 
         await setup_conf(config, key, hub)
+
 
 
 
