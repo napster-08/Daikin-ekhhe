@@ -438,22 +438,17 @@ CONFIG_SCHEMA = (
 async def setup_conf(config, key, hub):
     if key in config:
         conf = config[key]
-        number_conf = {
-            CONF_MIN_VALUE: conf.get(CONF_MIN_VALUE, 0),
-            CONF_MAX_VALUE: conf.get(CONF_MAX_VALUE, 99),
-            CONF_STEP: conf.get(CONF_STEP, 1),
-        }
-        if CONF_NAME in conf:
-            number_conf[CONF_NAME] = conf[CONF_NAME]
-        else:
-            number_conf[CONF_NAME] = conf.get('name', key.replace('_', ' ').title())
-        for k, v in conf.items():
-            if k not in [CONF_MIN_VALUE, CONF_MAX_VALUE, CONF_STEP, CONF_NAME]:
-                number_conf[k] = v
-        num = await number.new_number(number_conf)
+        # ✅ Defaults directs SANS CONF_NAME
+        num = await number.new_number(
+            conf,
+            min_value=conf.get(CONF_MIN_VALUE, 0),
+            max_value=conf.get(CONF_MAX_VALUE, 99),
+            step=conf.get(CONF_STEP, 1)
+        )
         cg.add(getattr(hub, "register_number")(key, num))
         cg.add(num.set_parent(hub))
         cg.add(num.set_internal_id(key))
+
 
 
 
@@ -463,6 +458,7 @@ async def to_code(config):
     for key in TYPES:
 
         await setup_conf(config, key, hub)
+
 
 
 
