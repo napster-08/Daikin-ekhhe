@@ -17,34 +17,24 @@ TYPES =[
     DIG3_CONFIG
 ]
 
-CONFIG_SCHEMA = (
-    cv.Schema({
-        cv.GenerateID(CONF_EKHHE_ID): cv.use_id(DaikinEkhhe),
-        cv.Optional(DIG1_CONFIG): binary_sensor.binary_sensor_schema(
-            entity_category=ENTITY_CATEGORY_DIAGNOSTIC
-        ).extend({
-            cv.Optional(CONF_INVERTED, default=False): cv.boolean,  # ✅ .extend()
-        }),
-        cv.Optional(DIG2_CONFIG): binary_sensor.binary_sensor_schema(
-            entity_category=ENTITY_CATEGORY_DIAGNOSTIC
-        ).extend({
-            cv.Optional(CONF_INVERTED, default=False): cv.boolean,  # ✅ .extend()
-        }),
-        cv.Optional(DIG3_CONFIG): binary_sensor.binary_sensor_schema(
-            entity_category=ENTITY_CATEGORY_DIAGNOSTIC
-        ).extend({
-            cv.Optional(CONF_INVERTED, default=False): cv.boolean,  # ✅ .extend()
-        }),
-    })
-)
+CONFIG_SCHEMA = cv.Schema({
+    cv.GenerateID(CONF_EKHHE_ID): cv.use_id(DaikinEkhhe),
+    cv.Optional(DIG1_CONFIG): binary_sensor.binary_sensor_schema(
+        entity_category=ENTITY_CATEGORY_DIAGNOSTIC
+    ),
+    cv.Optional(DIG2_CONFIG): binary_sensor.binary_sensor_schema(
+        entity_category=ENTITY_CATEGORY_DIAGNOSTIC
+    ),
+    cv.Optional(DIG3_CONFIG): binary_sensor.binary_sensor_schema(
+        entity_category=ENTITY_CATEGORY_DIAGNOSTIC
+    ),
+})
 
 
 async def setup_conf(config, key, hub):
     if key in config:
         conf = config[key]
-
         sens = await binary_sensor.new_binary_sensor(conf)
-        cg.add(hub.register_binary_sensor(key, sens))
 
 
 async def to_code(config):
@@ -52,5 +42,6 @@ async def to_code(config):
     for key in TYPES:
 
         await setup_conf(config, key, hub)
+
 
 
