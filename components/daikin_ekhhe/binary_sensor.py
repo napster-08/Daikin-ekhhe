@@ -18,27 +18,26 @@ TYPES =[
 ]
 
 CONFIG_SCHEMA = (
-    cv.Schema(
-        {
-            cv.GenerateID(CONF_EKHHE_ID): cv.use_id(DaikinEkhhe),
-            cv.Optional(DIG1_CONFIG): binary_sensor.binary_sensor_schema(
-                #device_class=DEVICE_CLASS_NONE,
-                entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
-                cv.Optional(CONF_INVERTED, default=False): cv.boolean,
-            ),
-            cv.Optional(DIG2_CONFIG): binary_sensor.binary_sensor_schema(
-                #device_class=DEVICE_CLASS_NONE,
-                entity_category=ENTITY_CATEGORY_DIAGNOSTIC,
-                cv.Optional(CONF_INVERTED, default=False): cv.boolean,
-            ),
-            cv.Optional(DIG3_CONFIG): binary_sensor.binary_sensor_schema(
-                #device_class=DEVICE_CLASS_NONE,
-                entity_category=ENTITY_CATEGORY_DIAGNOSTIC,  
-                cv.Optional(CONF_INVERTED, default=False): cv.boolean, 
-            ),
-        }
-    )
+    cv.Schema({
+        cv.GenerateID(CONF_EKHHE_ID): cv.use_id(DaikinEkhhe),
+        cv.Optional(DIG1_CONFIG): binary_sensor.binary_sensor_schema(
+            entity_category=ENTITY_CATEGORY_DIAGNOSTIC
+        ).extend({
+            cv.Optional(CONF_INVERTED, default=False): cv.boolean,  # ✅ .extend()
+        }),
+        cv.Optional(DIG2_CONFIG): binary_sensor.binary_sensor_schema(
+            entity_category=ENTITY_CATEGORY_DIAGNOSTIC
+        ).extend({
+            cv.Optional(CONF_INVERTED, default=False): cv.boolean,  # ✅ .extend()
+        }),
+        cv.Optional(DIG3_CONFIG): binary_sensor.binary_sensor_schema(
+            entity_category=ENTITY_CATEGORY_DIAGNOSTIC
+        ).extend({
+            cv.Optional(CONF_INVERTED, default=False): cv.boolean,  # ✅ .extend()
+        }),
+    })
 )
+
 
 async def setup_conf(config, key, hub):
     if key in config:
@@ -53,4 +52,5 @@ async def to_code(config):
     for key in TYPES:
 
         await setup_conf(config, key, hub)
+
 
