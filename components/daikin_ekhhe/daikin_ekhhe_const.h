@@ -7,41 +7,41 @@ namespace daikin_ekhhe {
 
 // Define names as static constants
 // this should match what is in const.py on the Python side
-static const std::string A_LOW_WAT_T_PROBE       = "low_water_temp_probe";
-static const std::string B_UP_WAT_T_PROBE        = "upper_water_temp_probe";
-static const std::string C_DEFROST_T_PROBE       = "defrost_temp_probe";
-static const std::string D_SUPPLY_AIR_T_PROBE    = "supply_air_temp_probe";
-static const std::string E_EVA_INLET_T_PROBE     = "evaporator_inlet_gas_temp_probe";
-static const std::string F_EVA_OUTLET_T_PROBE    = "evaporator_outlet_gas_temp_probe";
-static const std::string G_COMP_GAS_T_PROBE      = "compressor_discharge_gas_temp_probe";
-static const std::string H_SOLAR_T_PROBE         = "solar_collector_temp_probe";
-static const std::string I_EEV_STEP              = "eev_opening_step";
-static const std::string J_POWER_FW_VERSION      = "power_board_firmware_version";
-static const std::string L_UI_FW_VERSION         = "ui_firmware_version";
+static const std::string A_LOW_WAT_T_PROBE       = "sonde_temp_eau_basse";
+static const std::string B_UP_WAT_T_PROBE        = "sonde_temp_eau_haute";
+static const std::string C_DEFROST_T_PROBE       = "sonde_température_de_dégivrage";
+static const std::string D_SUPPLY_AIR_T_PROBE    = "sonde_temp_air_souffle";
+static const std::string E_EVA_INLET_T_PROBE     = "Sonde de temperature du gaz à l'entree de l'evaporateur";
+static const std::string F_EVA_OUTLET_T_PROBE    = "Sonde de temperature du gaz à la sortie de l'evaporateur";
+static const std::string G_COMP_GAS_T_PROBE      = "Sonde de temperature du gaz de refoulement du compresseur";
+static const std::string H_SOLAR_T_PROBE         = "Sonde de temperature pour capteur solaire";
+static const std::string I_EEV_STEP              = "Ouverture_etape_EEV";
+static const std::string J_POWER_FW_VERSION      = "version_du_micrologiciel_carte_alimentation";
+static const std::string L_UI_FW_VERSION         = "Version du micrologiciel de l'interface utilisateur";
 
 static const std::string DIG1_CONFIG             = "dig1_config";
 static const std::string DIG2_CONFIG             = "dig2_config";
 static const std::string DIG3_CONFIG             = "dig3_config";
 
-static const std::string POWER_STATUS            = "power_status";
-static const std::string OPERATIONAL_MODE        = "operational_mode";
-static const std::string CURRENT_TIME            = "current_time";
+static const std::string POWER_STATUS            = "etat_d'alimentation";
+static const std::string OPERATIONAL_MODE        = "mode_fonctionnement";
+static const std::string CURRENT_TIME            = "heure_actuelle";
 
-static const std::string AUTO_T_TEMPERATURE      = "auto_target_temperature";
-static const std::string ECO_T_TEMPERATURE       = "eco_target_temperature";
-static const std::string BOOST_T_TEMPERATURE     = "boost_target_temperature";
-static const std::string ELECTRIC_T_TEMPERATURE  = "electric_target_temperature";
+static const std::string AUTO_T_TEMPERATURE      = "température_mode_automatique";
+static const std::string ECO_T_TEMPERATURE       = "température_mode_eco";
+static const std::string BOOST_T_TEMPERATURE     = "température_mode_boost";
+static const std::string ELECTRIC_T_TEMPERATURE  = "température_mode_electric";
 
 static const std::string P1_LOW_WAT_PROBE_HYST   = "low_water_hp_hysteris";
-static const std::string P2_HEAT_ON_DELAY        = "elec_heater_switch_on_delay";
-static const std::string P3_ANTL_SET_T           = "antilegionella_setpoint_temp";
-static const std::string P4_ANTL_DURATION        = "antilegionella_duration";
-static const std::string P5_DEFROST_MODE         = "defrosting_mode";
-static const std::string P6_EHEATER_DEFROSTING   = "elec_heater_during_defrosting";
-static const std::string P7_DEFROST_CYCLE_DELAY  = "defrosting_cycle_delay";
-static const std::string P8_DEFR_START_THRES     = "defrosting_start_temp_threshold";
-static const std::string P9_DEFR_STOP_THRES      = "defrosting_stop_temp_threshold";
-static const std::string P10_DEFR_MAX_DURATION   = "max_defrosting_duration";
+static const std::string P2_HEAT_ON_DELAY        = "Retard à l'enclenchement du chauffage électrique";
+static const std::string P3_ANTL_SET_T           = "température de consigne anti-légionellose";
+static const std::string P4_ANTL_DURATION        = "durée_antilégionelle";
+static const std::string P5_DEFROST_MODE         = "mode_dégivrage";
+static const std::string P6_EHEATER_DEFROSTING   = "chauffage_électrique_pendant_le_dégivrage";
+static const std::string P7_DEFROST_CYCLE_DELAY  = "délai_cycle_dégivrage";
+static const std::string P8_DEFR_START_THRES     = "seuil_température_début_dégivrage";
+static const std::string P9_DEFR_STOP_THRES      = "seuil_température_arrêt_dégivrage";
+static const std::string P10_DEFR_MAX_DURATION   = "durée_maximale_de_dégivrage";
 
 static const std::string P11_DISP_WAT_T_PROBE    = "display_water_probe_temp";
 static const std::string P12_EXT_PUMP_MODE       = "external_pump_mode";
@@ -87,8 +87,9 @@ static const std::string P48_MIN_INLET_T_HP      = "min_inlet_temp_hp_working";
 static const std::string P49_EVA_INLET_THRES     = "evaporator_inlet_temp_threshold_blower";
 static const std::string P50_ANTIFREEZE_SET      = "antifreeze_low_water_temp_setpoint";
 
-static const std::string P51_EVA_HIGH_SET        = "evaporator_blower_high_speed_set";
-static const std::string P52_EVA_LOW_SET         = "evaporator_blower_low_speed_set";
+static const std::string P51_EVA_HIGH_SET        = "set_ventilateur_évaporateur_haute_vitesse";
+static const std::string P52_EVA_LOW_SET         = "set_ventilateur_évaporateur_basse_vitesse";
 
 }  // namespace daikin_ekhhe
 }  // namespace esphome
+
