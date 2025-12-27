@@ -439,23 +439,18 @@ async def setup_conf(config, key, hub):
     if key in config:
         conf = config[key]
         
-        # ✅ Syntaxe ESPHome CORRECTE : new_number retourne le schéma
-        num_conf = await number.new_number(conf)
+        # ✅ API ESPHome 2025 : new_number REQUIERT min_value, max_value, step
+        num_conf = await number.new_number(
+            conf,
+            min_value=conf.get(CONF_MIN_VALUE, 0.0),
+            max_value=conf.get(CONF_MAX_VALUE, 99.0),
+            step=conf.get(CONF_STEP, 1.0)
+        )
         
-        # ✅ Appliquer les defaults APRÈS création du schéma
-        cg.NewComponent(num_conf, component=DaikinEkhheNumber)
-        num = cg.Pvariable(num_conf[CONF_ID], name="daikin_ekhhe_number_" + key)
-        
-        # Appliquer defaults si manquants
-        if CONF_STEP not in conf:
-            cg.add(num.set_step(1.0))
-        if CONF_MIN_VALUE not in conf:
-            cg.add(num.set_min_value(0.0))
-        if CONF_MAX_VALUE not in conf:
-            cg.add(num.set_max_value(99.0))
-        
-        cg.add(getattr(hub, "register_number")(key, num))
-        cg.add(num.set_parent(hub))
+        cg.add(getattr(hub, "register_number")(key, num_conf))
+        cg.add(num_conf.set_parent(hub))
+        cg.add(num_conf.set_internal_id(key))
+
 
 
 
@@ -467,6 +462,7 @@ async def to_code(config):
     for key in TYPES:
 
         await setup_conf(config, key, hub)
+
 
 
 
