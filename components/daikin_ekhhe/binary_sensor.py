@@ -9,9 +9,6 @@ from . import (
 )
 
 from .const import *
-(
-    CONF_INVERTED,  # ✅ Ajoutez cette ligne
-)
 
 
 TYPES =[
@@ -56,3 +53,4 @@ async def to_code(config):
     for key in TYPES:
 
         await setup_conf(config, key, hub)
+
