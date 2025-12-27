@@ -35,13 +35,17 @@ async def setup_conf(config, key, hub):
     if key in config:
         conf = config[key]
         sens = await binary_sensor.new_binary_sensor(conf)
-
+        
+        #  INVERSION si spécifiée dans YAML
+        if CONF_INVERTED in conf and conf[CONF_INVERTED]:
+            cg.add(sens.set_inverted(True))
 
 async def to_code(config):
     hub = await cg.get_variable(config[CONF_EKHHE_ID])
     for key in TYPES:
 
         await setup_conf(config, key, hub)
+
 
 
 
