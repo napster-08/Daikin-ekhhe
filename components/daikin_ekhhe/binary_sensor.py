@@ -21,13 +21,19 @@ CONFIG_SCHEMA = cv.Schema({
     cv.GenerateID(CONF_EKHHE_ID): cv.use_id(DaikinEkhhe),
     cv.Optional(DIG1_CONFIG): binary_sensor.binary_sensor_schema(
         entity_category=ENTITY_CATEGORY_DIAGNOSTIC
-    ),
+    ).extend({
+        cv.Optional('inverted', default=False): cv.bool_,  # ✅ Syntaxe CORRECTE
+    }),
     cv.Optional(DIG2_CONFIG): binary_sensor.binary_sensor_schema(
         entity_category=ENTITY_CATEGORY_DIAGNOSTIC
-    ),
+    ).extend({
+        cv.Optional('inverted', default=False): cv.bool_,
+    }),
     cv.Optional(DIG3_CONFIG): binary_sensor.binary_sensor_schema(
         entity_category=ENTITY_CATEGORY_DIAGNOSTIC
-    ),
+    ).extend({
+        cv.Optional('inverted', default=False): cv.bool_,
+    }),
 })
 
 
@@ -47,6 +53,7 @@ async def to_code(config):
     for key in TYPES:
 
         await setup_conf(config, key, hub)
+
 
 
 
