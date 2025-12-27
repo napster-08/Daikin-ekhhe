@@ -41,7 +41,7 @@ DaikinEkhheNumber = daikin_ekhhe_ns.class_(
 )
 
 
-TYPES = [
+NUMBER_KEYS = [
     P1_LOW_WAT_PROBE_HYST,
     P2_HEAT_ON_DELAY,
     P3_ANTL_SET_T,
@@ -454,4 +454,5 @@ async def to_code(config):
     for key in TYPES:
 
         await setup_conf(config, key, hub)
+
 
