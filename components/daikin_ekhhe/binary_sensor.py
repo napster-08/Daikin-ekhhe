@@ -41,20 +41,16 @@ CONFIG_SCHEMA = (
 async def setup_conf(config, key, hub):
     if key in config:
         conf = config[key]
-        
-        # ✅ Inversion via le schéma (PAS C++)
-        if conf.get('inverted', False):
-            conf = conf.copy()
-            conf['inverted'] = True  # Force dans le schéma
-            
         sens = await binary_sensor.new_binary_sensor(conf)
         cg.add(hub.register_binary_sensor(key, sens))
+        
 
 async def to_code(config):
     hub = await cg.get_variable(config[CONF_EKHHE_ID])
     for key in TYPES:
 
         await setup_conf(config, key, hub)
+
 
 
 
